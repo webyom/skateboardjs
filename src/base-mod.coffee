@@ -11,9 +11,7 @@ class BaseMod
 		@_args = args || []
 		@_opt = opt || {}
 		@init()
-		@_render
-			args: @_args
-			opt: @_opt
+		@render()
 
 	showNavTab: false
 	navTab: ''
@@ -94,7 +92,7 @@ class BaseMod
 			].join ''
 			$('> .fixed-footer', @_contentDom).hide()
 
-	_render: ->
+	render: ->
 		if @_headerTpl
 			@_renderHeader
 				args: @_args

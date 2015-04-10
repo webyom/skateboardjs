@@ -587,10 +587,7 @@ define('./base-mod', ['require', 'exports', 'module', 'zepto', './core'], functi
       this._args = args || [];
       this._opt = opt || {};
       this.init();
-      this._render({
-        args: this._args,
-        opt: this._opt
-      });
+      this.render();
     }
 
     BaseMod.prototype.showNavTab = false;
@@ -705,7 +702,7 @@ define('./base-mod', ['require', 'exports', 'module', 'zepto', './core'], functi
       }
     };
 
-    BaseMod.prototype._render = function() {
+    BaseMod.prototype.render = function() {
       if (this._headerTpl) {
         this._renderHeader({
           args: this._args,
