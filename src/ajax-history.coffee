@@ -1,4 +1,4 @@
-$ = require 'zepto'
+$ = require 'jquery'
 
 _markCacheIndexHash = {}
 _cache = []

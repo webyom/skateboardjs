@@ -1,4 +1,4 @@
-$ = require 'zepto'
+$ = require 'jquery'
 core = require './core'
 
 class BaseMod
@@ -62,35 +62,35 @@ class BaseMod
 	_renderHeader: (data) ->
 		if @_contentDom
 			if typeof data is 'string'
-				$('> .header', @_contentDom).html data
+				$('> .sb-mod__header', @_contentDom).html data
 			else
-				$('> .header', @_contentDom).html @_headerTpl.render data
+				$('> .sb-mod__header', @_contentDom).html @_headerTpl.render data
 
 	_renderBody: (data) ->
 		if @_contentDom
 			if typeof data is 'string'
-				$('> .body', @_contentDom).html data
+				$('> .sb-mod__body', @_contentDom).html data
 			else
-				$('> .body', @_contentDom).html @_bodyTpl.render data
+				$('> .sb-mod__body', @_contentDom).html @_bodyTpl.render data
 
 	_renderFixedFooter: (data) ->
 		if @_contentDom
 			if typeof data is 'string'
-				$('> .fixed-footer', @_contentDom).html(data).show()
+				$('> .sb-mod__fixed-footer', @_contentDom).html(data).show()
 			else
-				$('> .fixed-footer', @_contentDom).html(@_fixedFooterTpl.render data).show()
+				$('> .sb-mod__fixed-footer', @_contentDom).html(@_fixedFooterTpl.render data).show()
 
 	_renderError: (msg) ->
 		if @_contentDom
-			$('> .body', @_contentDom).html [
-				'<div class="body-msg" data-refresh-btn>'
+			$('> .sb-mod__body', @_contentDom).html [
+				'<div class="sb-mod__body__msg" data-refresh-btn>'
 					'<div class="msg">'
 						msg or G.SVR_ERR_MSG
 					'</div>'
 					'<div class="refresh"><span class="icon icon-refresh"></span>点击刷新</div>'
 				'</div>'
 			].join ''
-			$('> .fixed-footer', @_contentDom).hide()
+			$('> .sb-mod__fixed-footer', @_contentDom).hide()
 
 	render: ->
 		if @_headerTpl
@@ -122,15 +122,13 @@ class BaseMod
 	refresh: ->
 		@scrollToTop()
 		core.scroll 0
-		@_render
-			args: @_args
-			opt: @_opt
+		@render()
 
 	scrollToTop: ->
-		$('> .body', @_contentDom).scrollTop 0
+		$('> .sb-mod__body', @_contentDom).scrollTop 0
 
 	isRenderred: ->
-		$('[data-content-not-renderred]', @_contentDom).length is 0
+		$('[data-sb-mod-not-renderred]', @_contentDom).length is 0
 
 	hasParent: (modName) ->
 		res = @_modName.indexOf(modName + '/') is 0
@@ -144,7 +142,7 @@ class BaseMod
 		core.fadeIn @_contentDom, relModInst?.hasParent(@_modName), animateType
 
 	fadeOut: (relModName, animateType) ->
-		@_contentDom.attr 'data-scene', (parseInt(@_contentDom.attr('data-scene')) or 0) + 1
+		@_contentDom.attr 'data-sb-scene', (parseInt(@_contentDom.attr('data-sb-scene')) or 0) + 1
 		@_ifNotCachable relModName, =>
 			core.removeCache @_modName
 		core.fadeOut @_contentDom, @hasParent(relModName), animateType, =>
@@ -152,10 +150,10 @@ class BaseMod
 
 	captureScene: (callback) ->
 		if @_contentDom
-			scene = parseInt(@_contentDom.attr('data-scene')) or 0
+			scene = parseInt(@_contentDom.attr('data-sb-scene')) or 0
 			callback (callback) =>
 				if @_contentDom
-					newScene = parseInt(@_contentDom.attr('data-scene')) or 0
+					newScene = parseInt(@_contentDom.attr('data-sb-scene')) or 0
 					callback() if newScene is scene
 
 	destroy: () ->

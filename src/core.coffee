@@ -1,4 +1,4 @@
-$ = require 'zepto'
+$ = require 'jquery'
 ajaxHistory = require './ajax-history'
 
 _modCache = {}
@@ -19,13 +19,13 @@ _switchNavTab = (modInst) ->
 			tabName = tabName()
 		$('nav [data-tab]', _container).removeClass 'active'
 		$('nav [data-tab="' + tabName + '"]', _container).addClass 'active'
-		modClassName = 'mod-' + modInst._modName.replace(/\//g, '-')
-		bodyClassName = document.body.className.replace (/\bmod-\S+/), modClassName
-		if (/\bshow-nav\b/).test bodyClassName
+		modClassName = 'sb-mod--' + modInst._modName.replace(/\//g, '-')
+		bodyClassName = document.body.className.replace (/\bsb-mod--\S+/), modClassName
+		if (/\bsb-show-nav\b/).test bodyClassName
 			if not modInst.showNavTab
-				bodyClassName = bodyClassName.replace (/\s*\bshow-nav\b/), ''
+				bodyClassName = bodyClassName.replace (/\s*\bsb-show-nav\b/), ''
 		else if modInst.showNavTab
-			bodyClassName = bodyClassName + ' show-nav'
+			bodyClassName = bodyClassName + ' sb-show-nav'
 		document.body.className = bodyClassName
 
 _constructContentDom = (modName, args, opt) ->
@@ -34,25 +34,23 @@ _constructContentDom = (modName, args, opt) ->
 	else
 		titleTpl = require _opt.modBase + 'mod/' + modName + '/title.tpl.html'
 		contentDom = $([
-			'<div class="content mod-' + modName.replace(/\//g, '-') + '" data-mod="' + modName + '" data-scene="0">'
-				'<header class="bar bar-nav header">'
+			'<div class="sb-mod sb-mod--' + modName.replace(/\//g, '-') + '" data-sb-mod="' + modName + '" data-sb-scene="0">'
+				'<header class="sb-mod__header">'
 					if titleTpl then titleTpl.render({args: args, opt: opt}) else '<h1 class="title"></h1>'
 				'</header>'
-				'<div class="body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">'
-					'<div class="body-msg" data-content-not-renderred>'
-						'<div class="msg">'
-							'内容正在赶来，请稍候...'
-						'</div>'
+				'<div class="sb-mod__body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">'
+					'<div class="sb-mod__body__msg" data-sb-mod-not-renderred>'
+						'内容正在赶来，请稍候...'
 					'</div>'
 				'</div>'
-				'<div class="fixed-footer" style="display: none;">'
+				'<div class="sb-mod__fixed-footer" style="display: none;">'
 				'</div>'
 			'</div>'
 		].join('')).prependTo _container
 	contentDom
 
 _init = ->
-	$(document.body).addClass 'mod-init-mod' unless (/\bmod-\S+/).test document.body.className
+	$(document.body).addClass 'sb-mod--init-mod' unless (/\bsb-mod--\S+/).test document.body.className
 	_container = $(_opt.container) if _opt.container
 	ajaxHistory.setListener view
 	ajaxHistory.init
@@ -107,7 +105,7 @@ fadeIn = (contentDom, backToParent, animateType, cb) ->
 		if animateType is 'fade'
 			contentDom.show()
 		else if animateType is 'slide'
-			$('.content[data-mod]').css
+			$('.sb-mod').css
 				zIndex: '0'
 			contentDom.css
 				zIndex: '1'
@@ -167,7 +165,7 @@ fadeOut = (contentDom, backToParent, animateType, cb) ->
 	ttf = _opt.animate?.timingFunction || 'linear'
 	duration = _opt.animate?.duration || 300
 	callback = ->
-		contentDom.hide() if contentDom.data('mod') isnt _currentModName
+		contentDom.hide() if contentDom.data('sb-mod') isnt _currentModName
 		cb?()
 	if animateType is 'fade'
 		contentDom.css
@@ -183,7 +181,7 @@ fadeOut = (contentDom, backToParent, animateType, cb) ->
 		sd = $('[data-slide-direction]', contentDom).data 'slide-direction'
 		if sd in ['vu', 'vd']
 			res = 'fade'
-		$('.content[data-mod]').css
+		$('.sb-mod').css
 			zIndex: '0'
 		if _opt.transformAnimation is false
 			contentDom.css
@@ -265,7 +263,7 @@ view = (mark, opt) ->
 		_switchNavTab modInst
 	else
 		removeCache modName
-		$('.content[data-mod="' + modName + '"]', _container).remove()
+		$('[data-sb-mod="' + modName + '"]', _container).remove()
 		((modName, contentDom, args, pModName) ->
 			fadeIn contentDom, pModInst?.hasParent(modName), pModInst?.fadeOut(modName)
 			require [_opt.modBase + 'mod/' + modName + '/main'], (ModClass) ->
@@ -275,8 +273,9 @@ view = (mark, opt) ->
 				else
 					contentDom.remove()
 			, ->
-				contentDom.remove()
-				showAlert({type: 'error'}, {holdMark: true}) if modName is _currentModName
+				if modName isnt 'alert'
+					contentDom.remove()
+					showAlert({type: 'error'}, {holdMark: true}) if modName is _currentModName
 		)(modName, _constructContentDom(modName, args, opt.modOpt), args, pModName)
 	ajaxHistory.setMark(mark, replaceState: opt.replaceState) if not opt.holdMark
 
@@ -287,9 +286,9 @@ scroll = (top) ->
 		y = top - _scrollTop
 		_scrollTop = top
 		if y > 0 and top > 44
-			$('[data-mod="' + getCurrentModName() + '"]').addClass 'hide-header'
+			$('[data-sb-mod="' + getCurrentModName() + '"]').addClass 'sb-hide-header'
 		else
-			$('[data-mod="' + getCurrentModName() + '"]').removeClass 'hide-header'
+			$('[data-sb-mod="' + getCurrentModName() + '"]').removeClass 'sb-hide-header'
 
 showAlert = (opt, viewOpt) ->
 	opt = opt || {type: 'error'}
