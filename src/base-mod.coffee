@@ -139,13 +139,13 @@ class BaseMod
 		res
 
 	fadeIn: (relModInst, animateType) ->
-		core.fadeIn @_contentDom, relModInst?.hasParent(@_modName), animateType
+		core.fadeIn @, @_contentDom, relModInst?.hasParent(@_modName), animateType
 
 	fadeOut: (relModName, animateType) ->
 		@_contentDom.attr 'data-sb-scene', (parseInt(@_contentDom.attr('data-sb-scene')) or 0) + 1
 		@_ifNotCachable relModName, =>
 			core.removeCache @_modName
-		core.fadeOut @_contentDom, @hasParent(relModName), animateType, =>
+		core.fadeOut @, @_contentDom, @hasParent(relModName), animateType, =>
 			@_afterFadeOut relModName
 
 	captureScene: (callback) ->

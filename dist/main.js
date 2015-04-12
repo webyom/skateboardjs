@@ -15,11 +15,11 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
 
 });
 
-define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], function(require, exports, module) {
+define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], function(require, exports, module) {
 (function() {
   var $, _constructContentDom, _container, _currentMark, _currentModName, _init, _modCache, _opt, _previousMark, _previousModName, _scrollTop, _switchNavTab, ajaxHistory, fadeIn, fadeOut, getCached, getCurrentModName, getPreviousModName, init, removeCache, scroll, showAlert, view;
 
-  $ = require('zepto');
+  $ = require('jquery');
 
   ajaxHistory = require('./ajax-history');
 
@@ -50,14 +50,14 @@ define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], fu
       }
       $('nav [data-tab]', _container).removeClass('active');
       $('nav [data-tab="' + tabName + '"]', _container).addClass('active');
-      modClassName = 'mod-' + modInst._modName.replace(/\//g, '-');
-      bodyClassName = document.body.className.replace(/\bmod-\S+/, modClassName);
-      if (/\bshow-nav\b/.test(bodyClassName)) {
+      modClassName = 'sb-mod--' + modInst._modName.replace(/\//g, '-');
+      bodyClassName = document.body.className.replace(/\bsb-mod--\S+/, modClassName);
+      if (/\bsb-show-nav\b/.test(bodyClassName)) {
         if (!modInst.showNavTab) {
-          bodyClassName = bodyClassName.replace(/\s*\bshow-nav\b/, '');
+          bodyClassName = bodyClassName.replace(/\s*\bsb-show-nav\b/, '');
         }
       } else if (modInst.showNavTab) {
-        bodyClassName = bodyClassName + ' show-nav';
+        bodyClassName = bodyClassName + ' sb-show-nav';
       }
       return document.body.className = bodyClassName;
     }
@@ -70,10 +70,10 @@ define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], fu
     } else {
       titleTpl = require(_opt.modBase + 'mod/' + modName + '/title.tpl.html');
       contentDom = $([
-        '<div class="content mod-' + modName.replace(/\//g, '-') + '" data-mod="' + modName + '" data-scene="0">', '<header class="bar bar-nav header">', titleTpl ? titleTpl.render({
+        '<div class="sb-mod sb-mod--' + modName.replace(/\//g, '-') + '" data-sb-mod="' + modName + '" data-sb-scene="0">', '<header class="sb-mod__header">', titleTpl ? titleTpl.render({
           args: args,
           opt: opt
-        }) : '<h1 class="title"></h1>', '</header>', '<div class="body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">', '<div class="body-msg" data-content-not-renderred>', '<div class="msg">', '内容正在赶来，请稍候...', '</div>', '</div>', '</div>', '<div class="fixed-footer" style="display: none;">', '</div>', '</div>'
+        }) : '<h1 class="title"></h1>', '</header>', '<div class="sb-mod__body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">', '<div class="sb-mod__body__msg" data-sb-mod-not-renderred>', '内容正在赶来，请稍候...', '</div>', '</div>', '<div class="sb-mod__fixed-footer" style="display: none;">', '</div>', '</div>'
       ].join('')).prependTo(_container);
     }
     return contentDom;
@@ -81,13 +81,17 @@ define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], fu
 
   _init = function() {
     var t;
-    if (!/\bmod-\S+/.test(document.body.className)) {
-      $(document.body).addClass('mod-init-mod');
+    if (!/\bsb-mod--\S+/.test(document.body.className)) {
+      $(document.body).addClass('sb-mod--init-mod');
     }
     if (_opt.container) {
       _container = $(_opt.container);
     }
-    ajaxHistory.setListener(view);
+    ajaxHistory.setListener(function(mark) {
+      return view(mark, {
+        fromHistory: true
+      });
+    });
     ajaxHistory.init({
       isSupportHistoryState: _opt.isSupportHistoryState
     });
@@ -153,17 +157,20 @@ define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], fu
     return _modCache[modName] = null;
   };
 
-  fadeIn = function(contentDom, backToParent, animateType, cb) {
+  fadeIn = function(modInst, contentDom, backToParent, animateType, cb) {
     var callback, duration, ref, ref1, ref2, res, sd, ttf;
+    if (typeof _opt.onBeforeFadeIn === "function") {
+      _opt.onBeforeFadeIn(modInst);
+    }
     res = '';
     animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
     ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
     duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
     callback = function() {
-      if (animateType === 'fade') {
+      if (animateType === 'fade' || animateType === 'fadeIn') {
         contentDom.show();
       } else if (animateType === 'slide') {
-        $('.content[data-mod]').css({
+        $('.sb-mod').css({
           zIndex: '0'
         });
         contentDom.css({
@@ -173,7 +180,7 @@ define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], fu
       return typeof cb === "function" ? cb() : void 0;
     };
     contentDom.show();
-    if (animateType === 'fade') {
+    if (animateType === 'fade' || animateType === 'fadeIn') {
       contentDom.css({
         opacity: '0'
       });
@@ -231,14 +238,17 @@ define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], fu
     return res;
   };
 
-  fadeOut = function(contentDom, backToParent, animateType, cb) {
+  fadeOut = function(modInst, contentDom, backToParent, animateType, cb) {
     var callback, duration, ref, ref1, ref2, res, sd, ttf;
+    if (typeof _opt.onBeforeFadeOut === "function") {
+      _opt.onBeforeFadeOut(modInst);
+    }
     res = '';
     animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
     ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
     duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
     callback = function() {
-      if (contentDom.data('mod') !== _currentModName) {
+      if (contentDom.data('sb-mod') !== _currentModName) {
         contentDom.hide();
       }
       return typeof cb === "function" ? cb() : void 0;
@@ -260,7 +270,7 @@ define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], fu
       if (sd === 'vu' || sd === 'vd') {
         res = 'fade';
       }
-      $('.content[data-mod]').css({
+      $('.sb-mod').css({
         zIndex: '0'
       });
       if (_opt.transformAnimation === false) {
@@ -344,6 +354,13 @@ define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], fu
         modInst.refresh();
       }
       _switchNavTab(modInst);
+      if (typeof _opt.onAfterViewChange === "function") {
+        _opt.onAfterViewChange(modInst, {
+          fromHistory: opt.fromHistory,
+          cacheView: true,
+          refresh: true
+        });
+      }
       return;
     }
     _previousMark = _currentMark;
@@ -360,26 +377,37 @@ define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], fu
     } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && modInst.getArgs().join('/') === args.join('/')) {
       modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0);
       _switchNavTab(modInst);
+      if (typeof _opt.onAfterViewChange === "function") {
+        _opt.onAfterViewChange(modInst, {
+          fromHistory: opt.fromHistory,
+          cacheView: true
+        });
+      }
     } else {
       removeCache(modName);
-      $('.content[data-mod="' + modName + '"]', _container).remove();
+      $('[data-sb-mod="' + modName + '"]', _container).remove();
       (function(modName, contentDom, args, pModName) {
-        fadeIn(contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, pModInst != null ? pModInst.fadeOut(modName) : void 0);
+        fadeIn(null, contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, pModInst != null ? pModInst.fadeOut(modName) : void 0);
         return require([_opt.modBase + 'mod/' + modName + '/main'], function(ModClass) {
           if (modName === _currentModName && !_modCache[modName]) {
             modInst = _modCache[modName] = new ModClass(modName, contentDom, args, opt.modOpt);
-            return _switchNavTab(modInst);
+            _switchNavTab(modInst);
+            return typeof _opt.onAfterViewChange === "function" ? _opt.onAfterViewChange(modInst, {
+              fromHistory: opt.fromHistory
+            }) : void 0;
           } else {
             return contentDom.remove();
           }
         }, function() {
-          contentDom.remove();
-          if (modName === _currentModName) {
-            return showAlert({
-              type: 'error'
-            }, {
-              holdMark: true
-            });
+          if (modName !== 'alert') {
+            contentDom.remove();
+            if (modName === _currentModName) {
+              return showAlert({
+                type: 'error'
+              }, {
+                holdMark: true
+              });
+            }
           }
         });
       })(modName, _constructContentDom(modName, args, opt.modOpt), args, pModName);
@@ -399,9 +427,9 @@ define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], fu
       y = top - _scrollTop;
       _scrollTop = top;
       if (y > 0 && top > 44) {
-        return $('[data-mod="' + getCurrentModName() + '"]').addClass('hide-header');
+        return $('[data-sb-mod="' + getCurrentModName() + '"]').addClass('sb-hide-header');
       } else {
-        return $('[data-mod="' + getCurrentModName() + '"]').removeClass('hide-header');
+        return $('[data-sb-mod="' + getCurrentModName() + '"]').removeClass('sb-hide-header');
       }
     }
   };
@@ -432,11 +460,11 @@ define('./core', ['require', 'exports', 'module', 'zepto', './ajax-history'], fu
 
 });
 
-define('./ajax-history', ['require', 'exports', 'module', 'zepto'], function(require, exports, module) {
+define('./ajax-history', ['require', 'exports', 'module', 'jquery'], function(require, exports, module) {
 (function() {
   var $, _cache, _cacheEnabled, _cacheSize, _checkMark, _currentMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _markCacheIndexHash, _previousMark, _setCache, _updateCurrentMark, clearCache, getCache, getMark, getPrevMark, init, isSupportHistoryState, setCache, setListener, setMark;
 
-  $ = require('zepto');
+  $ = require('jquery');
 
   _markCacheIndexHash = {};
 
@@ -568,11 +596,11 @@ define('./ajax-history', ['require', 'exports', 'module', 'zepto'], function(req
 
 });
 
-define('./base-mod', ['require', 'exports', 'module', 'zepto', './core'], function(require, exports, module) {
+define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], function(require, exports, module) {
 (function() {
   var $, BaseMod, core;
 
-  $ = require('zepto');
+  $ = require('jquery');
 
   core = require('./core');
 
@@ -668,9 +696,9 @@ define('./base-mod', ['require', 'exports', 'module', 'zepto', './core'], functi
     BaseMod.prototype._renderHeader = function(data) {
       if (this._contentDom) {
         if (typeof data === 'string') {
-          return $('> .header', this._contentDom).html(data);
+          return $('> .sb-mod__header', this._contentDom).html(data);
         } else {
-          return $('> .header', this._contentDom).html(this._headerTpl.render(data));
+          return $('> .sb-mod__header', this._contentDom).html(this._headerTpl.render(data));
         }
       }
     };
@@ -678,9 +706,9 @@ define('./base-mod', ['require', 'exports', 'module', 'zepto', './core'], functi
     BaseMod.prototype._renderBody = function(data) {
       if (this._contentDom) {
         if (typeof data === 'string') {
-          return $('> .body', this._contentDom).html(data);
+          return $('> .sb-mod__body', this._contentDom).html(data);
         } else {
-          return $('> .body', this._contentDom).html(this._bodyTpl.render(data));
+          return $('> .sb-mod__body', this._contentDom).html(this._bodyTpl.render(data));
         }
       }
     };
@@ -688,17 +716,17 @@ define('./base-mod', ['require', 'exports', 'module', 'zepto', './core'], functi
     BaseMod.prototype._renderFixedFooter = function(data) {
       if (this._contentDom) {
         if (typeof data === 'string') {
-          return $('> .fixed-footer', this._contentDom).html(data).show();
+          return $('> .sb-mod__fixed-footer', this._contentDom).html(data).show();
         } else {
-          return $('> .fixed-footer', this._contentDom).html(this._fixedFooterTpl.render(data)).show();
+          return $('> .sb-mod__fixed-footer', this._contentDom).html(this._fixedFooterTpl.render(data)).show();
         }
       }
     };
 
     BaseMod.prototype._renderError = function(msg) {
       if (this._contentDom) {
-        $('> .body', this._contentDom).html(['<div class="body-msg" data-refresh-btn>', '<div class="msg">', msg || G.SVR_ERR_MSG, '</div>', '<div class="refresh"><span class="icon icon-refresh"></span>点击刷新</div>', '</div>'].join(''));
-        return $('> .fixed-footer', this._contentDom).hide();
+        $('> .sb-mod__body', this._contentDom).html(['<div class="sb-mod__body__msg" data-refresh-btn>', '<div class="msg">', msg || G.SVR_ERR_MSG, '</div>', '<div class="refresh"><span class="icon icon-refresh"></span>点击刷新</div>', '</div>'].join(''));
+        return $('> .sb-mod__fixed-footer', this._contentDom).hide();
       }
     };
 
@@ -742,18 +770,15 @@ define('./base-mod', ['require', 'exports', 'module', 'zepto', './core'], functi
     BaseMod.prototype.refresh = function() {
       this.scrollToTop();
       core.scroll(0);
-      return this._render({
-        args: this._args,
-        opt: this._opt
-      });
+      return this.render();
     };
 
     BaseMod.prototype.scrollToTop = function() {
-      return $('> .body', this._contentDom).scrollTop(0);
+      return $('> .sb-mod__body', this._contentDom).scrollTop(0);
     };
 
     BaseMod.prototype.isRenderred = function() {
-      return $('[data-content-not-renderred]', this._contentDom).length === 0;
+      return $('[data-sb-mod-not-renderred]', this._contentDom).length === 0;
     };
 
     BaseMod.prototype.hasParent = function(modName) {
@@ -773,17 +798,17 @@ define('./base-mod', ['require', 'exports', 'module', 'zepto', './core'], functi
     };
 
     BaseMod.prototype.fadeIn = function(relModInst, animateType) {
-      return core.fadeIn(this._contentDom, relModInst != null ? relModInst.hasParent(this._modName) : void 0, animateType);
+      return core.fadeIn(this, this._contentDom, relModInst != null ? relModInst.hasParent(this._modName) : void 0, animateType);
     };
 
     BaseMod.prototype.fadeOut = function(relModName, animateType) {
-      this._contentDom.attr('data-scene', (parseInt(this._contentDom.attr('data-scene')) || 0) + 1);
+      this._contentDom.attr('data-sb-scene', (parseInt(this._contentDom.attr('data-sb-scene')) || 0) + 1);
       this._ifNotCachable(relModName, (function(_this) {
         return function() {
           return core.removeCache(_this._modName);
         };
       })(this));
-      return core.fadeOut(this._contentDom, this.hasParent(relModName), animateType, (function(_this) {
+      return core.fadeOut(this, this._contentDom, this.hasParent(relModName), animateType, (function(_this) {
         return function() {
           return _this._afterFadeOut(relModName);
         };
@@ -793,12 +818,12 @@ define('./base-mod', ['require', 'exports', 'module', 'zepto', './core'], functi
     BaseMod.prototype.captureScene = function(callback) {
       var scene;
       if (this._contentDom) {
-        scene = parseInt(this._contentDom.attr('data-scene')) || 0;
+        scene = parseInt(this._contentDom.attr('data-sb-scene')) || 0;
         return callback((function(_this) {
           return function(callback) {
             var newScene;
             if (_this._contentDom) {
-              newScene = parseInt(_this._contentDom.attr('data-scene')) || 0;
+              newScene = parseInt(_this._contentDom.attr('data-sb-scene')) || 0;
               if (newScene === scene) {
                 return callback();
               }

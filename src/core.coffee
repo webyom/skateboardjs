@@ -52,7 +52,8 @@ _constructContentDom = (modName, args, opt) ->
 _init = ->
 	$(document.body).addClass 'sb-mod--init-mod' unless (/\bsb-mod--\S+/).test document.body.className
 	_container = $(_opt.container) if _opt.container
-	ajaxHistory.setListener view
+	ajaxHistory.setListener (mark) ->
+		view mark, fromHistory: true
 	ajaxHistory.init
 		isSupportHistoryState: _opt.isSupportHistoryState
 	t = new Date()
@@ -96,13 +97,14 @@ getCached = (modName) ->
 removeCache = (modName) ->
 	_modCache[modName] = null
 
-fadeIn = (contentDom, backToParent, animateType, cb) ->
+fadeIn = (modInst, contentDom, backToParent, animateType, cb) ->
+	_opt.onBeforeFadeIn? modInst
 	res = ''
 	animateType = animateType || _opt.animate?.type
 	ttf = _opt.animate?.timingFunction || 'linear'
 	duration = _opt.animate?.duration || 300
 	callback = ->
-		if animateType is 'fade'
+		if animateType is 'fade' or animateType is 'fadeIn'
 			contentDom.show()
 		else if animateType is 'slide'
 			$('.sb-mod').css
@@ -111,7 +113,7 @@ fadeIn = (contentDom, backToParent, animateType, cb) ->
 				zIndex: '1'
 		cb?()
 	contentDom.show()
-	if animateType is 'fade'
+	if animateType is 'fade' or animateType is 'fadeIn'
 		contentDom.css
 			opacity: '0'
 		contentDom.show()
@@ -159,7 +161,8 @@ fadeIn = (contentDom, backToParent, animateType, cb) ->
 		callback()
 	res
 
-fadeOut = (contentDom, backToParent, animateType, cb) ->
+fadeOut = (modInst, contentDom, backToParent, animateType, cb) ->
+	_opt.onBeforeFadeOut? modInst
 	res = ''
 	animateType = animateType || _opt.animate?.type
 	ttf = _opt.animate?.timingFunction || 'linear'
@@ -248,6 +251,10 @@ view = (mark, opt) ->
 	if mark is _currentMark and modName isnt 'alert'
 		modInst?.refresh()
 		_switchNavTab modInst
+		_opt.onAfterViewChange? modInst,
+			fromHistory: opt.fromHistory
+			cacheView: true
+			refresh: true
 		return
 	_previousMark = _currentMark
 	_previousModName = _currentModName
@@ -261,15 +268,20 @@ view = (mark, opt) ->
 	else if modInst and modInst.isRenderred() and modName isnt 'alert' and not opt.modOpt and modInst.getArgs().join('/') is args.join('/')
 		modInst.fadeIn pModInst, pModInst?.fadeOut(modName)
 		_switchNavTab modInst
+		_opt.onAfterViewChange? modInst,
+			fromHistory: opt.fromHistory
+			cacheView: true
 	else
 		removeCache modName
 		$('[data-sb-mod="' + modName + '"]', _container).remove()
 		((modName, contentDom, args, pModName) ->
-			fadeIn contentDom, pModInst?.hasParent(modName), pModInst?.fadeOut(modName)
+			fadeIn null, contentDom, pModInst?.hasParent(modName), pModInst?.fadeOut(modName)
 			require [_opt.modBase + 'mod/' + modName + '/main'], (ModClass) ->
 				if modName is _currentModName and not _modCache[modName]
 					modInst = _modCache[modName] = new ModClass modName, contentDom, args, opt.modOpt
 					_switchNavTab modInst
+					_opt.onAfterViewChange? modInst,
+						fromHistory: opt.fromHistory
 				else
 					contentDom.remove()
 			, ->
