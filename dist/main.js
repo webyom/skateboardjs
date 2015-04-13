@@ -685,6 +685,8 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
       }
     };
 
+    BaseMod.prototype._afterFadeIn = function(relModInst) {};
+
     BaseMod.prototype._afterFadeOut = function(relModName) {
       return this._ifNotCachable(relModName, (function(_this) {
         return function() {
@@ -798,7 +800,11 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
     };
 
     BaseMod.prototype.fadeIn = function(relModInst, animateType) {
-      return core.fadeIn(this, this._contentDom, relModInst != null ? relModInst.hasParent(this._modName) : void 0, animateType);
+      return core.fadeIn(this, this._contentDom, relModInst != null ? relModInst.hasParent(this._modName) : void 0, animateType, (function(_this) {
+        return function() {
+          return _this._afterFadeIn(relModInst);
+        };
+      })(this));
     };
 
     BaseMod.prototype.fadeOut = function(relModName, animateType) {

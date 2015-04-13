@@ -55,6 +55,8 @@ class BaseMod
 					else
 						elseCallback?()
 
+	_afterFadeIn: (relModInst) ->
+
 	_afterFadeOut: (relModName) ->
 		@_ifNotCachable relModName, =>
 			@destroy();
@@ -139,7 +141,8 @@ class BaseMod
 		res
 
 	fadeIn: (relModInst, animateType) ->
-		core.fadeIn @, @_contentDom, relModInst?.hasParent(@_modName), animateType
+		core.fadeIn @, @_contentDom, relModInst?.hasParent(@_modName), animateType, =>
+			@_afterFadeIn relModInst
 
 	fadeOut: (relModName, animateType) ->
 		@_contentDom.attr 'data-sb-scene', (parseInt(@_contentDom.attr('data-sb-scene')) or 0) + 1
