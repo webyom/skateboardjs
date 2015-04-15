@@ -405,11 +405,14 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
               return showAlert({
                 type: 'error',
                 subType: 'load_mod_fail',
-                modName: modName
+                failLoadModName: modName
               }, {
+                failLoadModName: modName,
                 holdMark: true
               });
             }
+          } else {
+            return alert('Failed to load module "' + (opt.failLoadModName || modName) + '"');
           }
         });
       })(modName, _constructContentDom(modName, args, opt.modOpt), args, pModName);
