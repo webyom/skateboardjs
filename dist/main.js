@@ -403,7 +403,9 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
             contentDom.remove();
             if (modName === _currentModName) {
               return showAlert({
-                type: 'error'
+                type: 'error',
+                subType: 'load_mod_fail',
+                modName: modName
               }, {
                 holdMark: true
               });

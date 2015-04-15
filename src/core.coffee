@@ -287,7 +287,7 @@ view = (mark, opt) ->
 			, ->
 				if modName isnt 'alert'
 					contentDom.remove()
-					showAlert({type: 'error'}, {holdMark: true}) if modName is _currentModName
+					showAlert({type: 'error', subType: 'load_mod_fail', modName: modName}, {holdMark: true}) if modName is _currentModName
 		)(modName, _constructContentDom(modName, args, opt.modOpt), args, pModName)
 	ajaxHistory.setMark(mark, replaceState: opt.replaceState) if not opt.holdMark
 
