@@ -17,7 +17,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
 
 define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], function(require, exports, module) {
 (function() {
-  var $, _constructContentDom, _container, _currentMark, _currentModName, _init, _modCache, _opt, _previousMark, _previousModName, _scrollTop, _switchNavTab, ajaxHistory, fadeIn, fadeOut, getCached, getCurrentModName, getPreviousModName, init, removeCache, scroll, showAlert, view;
+  var $, _constructContentDom, _container, _currentMark, _currentModName, _init, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _scrollTop, _switchNavTab, ajaxHistory, fadeIn, fadeOut, getCached, getCurrentModName, getPreviousModName, init, removeCache, scroll, showAlert, view;
 
   $ = require('jquery');
 
@@ -40,7 +40,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
   _container = $(document.body);
 
   _switchNavTab = function(modInst) {
-    var bodyClassName, modClassName, tabName;
+    var tabName;
     if (_opt.switchNavTab) {
       return _opt.switchNavTab(modInst);
     } else {
@@ -49,9 +49,17 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         tabName = tabName();
       }
       $('nav [data-tab]', _container).removeClass('active');
-      $('nav [data-tab="' + tabName + '"]', _container).addClass('active');
-      modClassName = 'sb-mod--' + modInst._modName.replace(/\//g, '-');
-      bodyClassName = document.body.className.replace(/\bsb-mod--\S+/, modClassName);
+      return $('nav [data-tab="' + tabName + '"]', _container).addClass('active');
+    }
+  };
+
+  _onAfterViewChange = function(modInst, opt) {
+    var bodyClassName, modClassName;
+    if (_opt.onAfterViewChange) {
+      return _opt.onAfterViewChange(modInst, opt);
+    } else {
+      modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '-');
+      bodyClassName = document.body.className.replace(/\bbody-sb-mod--\S+/, modClassName);
       if (/\bsb-show-nav\b/.test(bodyClassName)) {
         if (!modInst.showNavTab) {
           bodyClassName = bodyClassName.replace(/\s*\bsb-show-nav\b/, '');
@@ -81,8 +89,8 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
 
   _init = function() {
     var t;
-    if (!/\bsb-mod--\S+/.test(document.body.className)) {
-      $(document.body).addClass('sb-mod--init-mod');
+    if (!/\bbody-sb-mod--\S+/.test(document.body.className)) {
+      $(document.body).addClass('body-sb-mod--init-mod');
     }
     if (_opt.container) {
       _container = $(_opt.container);
@@ -353,13 +361,11 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       if (modInst) {
         modInst.refresh();
         _switchNavTab(modInst);
-        if (typeof _opt.onAfterViewChange === "function") {
-          _opt.onAfterViewChange(modInst, {
-            fromHistory: opt.fromHistory,
-            cacheView: true,
-            refresh: true
-          });
-        }
+        _onAfterViewChange(modInst, {
+          fromHistory: opt.fromHistory,
+          cacheView: true,
+          refresh: true
+        });
       }
       return;
     }
@@ -377,12 +383,10 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && modInst.getArgs().join('/') === args.join('/')) {
       modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0);
       _switchNavTab(modInst);
-      if (typeof _opt.onAfterViewChange === "function") {
-        _opt.onAfterViewChange(modInst, {
-          fromHistory: opt.fromHistory,
-          cacheView: true
-        });
-      }
+      _onAfterViewChange(modInst, {
+        fromHistory: opt.fromHistory,
+        cacheView: true
+      });
     } else {
       removeCache(modName);
       $('[data-sb-mod="' + modName + '"]', _container).remove();
@@ -399,11 +403,9 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
             } finally {
               if (modInst) {
                 _switchNavTab(modInst);
-                if (typeof _opt.onAfterViewChange === "function") {
-                  _opt.onAfterViewChange(modInst, {
-                    fromHistory: opt.fromHistory
-                  });
-                }
+                _onAfterViewChange(modInst, {
+                  fromHistory: opt.fromHistory
+                });
               } else {
                 contentDom.remove();
               }

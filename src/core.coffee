@@ -19,8 +19,13 @@ _switchNavTab = (modInst) ->
 			tabName = tabName()
 		$('nav [data-tab]', _container).removeClass 'active'
 		$('nav [data-tab="' + tabName + '"]', _container).addClass 'active'
-		modClassName = 'sb-mod--' + modInst._modName.replace(/\//g, '-')
-		bodyClassName = document.body.className.replace (/\bsb-mod--\S+/), modClassName
+
+_onAfterViewChange = (modInst, opt) ->
+	if _opt.onAfterViewChange
+		_opt.onAfterViewChange modInst, opt
+	else
+		modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '-')
+		bodyClassName = document.body.className.replace (/\bbody-sb-mod--\S+/), modClassName
 		if (/\bsb-show-nav\b/).test bodyClassName
 			if not modInst.showNavTab
 				bodyClassName = bodyClassName.replace (/\s*\bsb-show-nav\b/), ''
@@ -50,7 +55,7 @@ _constructContentDom = (modName, args, opt) ->
 	contentDom
 
 _init = ->
-	$(document.body).addClass 'sb-mod--init-mod' unless (/\bsb-mod--\S+/).test document.body.className
+	$(document.body).addClass 'body-sb-mod--init-mod' unless (/\bbody-sb-mod--\S+/).test document.body.className
 	_container = $(_opt.container) if _opt.container
 	ajaxHistory.setListener (mark) ->
 		view mark, fromHistory: true
@@ -252,7 +257,7 @@ view = (mark, opt) ->
 		if modInst
 			modInst.refresh()
 			_switchNavTab modInst
-			_opt.onAfterViewChange? modInst,
+			_onAfterViewChange modInst,
 				fromHistory: opt.fromHistory
 				cacheView: true
 				refresh: true
@@ -269,7 +274,7 @@ view = (mark, opt) ->
 	else if modInst and modInst.isRenderred() and modName isnt 'alert' and not opt.modOpt and modInst.getArgs().join('/') is args.join('/')
 		modInst.fadeIn pModInst, pModInst?.fadeOut(modName)
 		_switchNavTab modInst
-		_opt.onAfterViewChange? modInst,
+		_onAfterViewChange modInst,
 			fromHistory: opt.fromHistory
 			cacheView: true
 	else
@@ -286,7 +291,7 @@ view = (mark, opt) ->
 					finally
 						if modInst
 							_switchNavTab modInst
-							_opt.onAfterViewChange? modInst,
+							_onAfterViewChange modInst,
 								fromHistory: opt.fromHistory
 						else
 							contentDom.remove()
