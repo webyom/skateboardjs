@@ -59,7 +59,7 @@ _init = ->
 	$(document.body).addClass 'body-sb-mod--init-mod' unless (/\bbody-sb-mod--\S+/).test document.body.className
 	_container = $(_opt.container) if _opt.container
 	ajaxHistory.setListener (mark) ->
-		view mark, fromHistory: true
+		view mark, from: 'history'
 	ajaxHistory.init
 		isSupportHistoryState: _opt.isSupportHistoryState
 	t = new Date()
@@ -78,7 +78,7 @@ _init = ->
 				history.back()
 			else if mark.indexOf('/' + _opt.modPrefix + '/') is 0
 				e.preventDefault()
-				view mark
+				view mark, from: 'link'
 	.on 'click', '[data-refresh-btn]', () ->
 		modInst = _modCache[_currentModName]
 		modInst?.refresh()
@@ -254,8 +254,8 @@ view = (mark, opt) ->
 	modName = modName || _opt.defaultModName
 	modInst = _modCache[modName]
 	_viewChangeInfo =
-		fromHistory: opt.fromHistory
-		cacheView: true
+		from: opt.from || 'api'
+		loadFromModCache: true
 		fromModName: pModName
 		toModName: modName
 	_opt.onBeforeViewChange?()
@@ -279,7 +279,7 @@ view = (mark, opt) ->
 		_switchNavTab modInst
 		_onAfterViewChange modInst
 	else
-		_viewChangeInfo.cacheView = false
+		_viewChangeInfo.loadFromModCache = false
 		removeCache modName
 		$('[data-sb-mod="' + modName + '"]', _container).remove()
 		((modName, contentDom, args, pModName) ->

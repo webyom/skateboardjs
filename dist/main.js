@@ -99,7 +99,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     }
     ajaxHistory.setListener(function(mark) {
       return view(mark, {
-        fromHistory: true
+        from: 'history'
       });
     });
     ajaxHistory.init({
@@ -124,7 +124,9 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
           return history.back();
         } else if (mark.indexOf('/' + _opt.modPrefix + '/') === 0) {
           e.preventDefault();
-          return view(mark);
+          return view(mark, {
+            from: 'link'
+          });
         }
       }
     }).on('click', '[data-refresh-btn]', function() {
@@ -357,8 +359,8 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     modName = modName || _opt.defaultModName;
     modInst = _modCache[modName];
     _viewChangeInfo = {
-      fromHistory: opt.fromHistory,
-      cacheView: true,
+      from: opt.from || 'api',
+      loadFromModCache: true,
       fromModName: pModName,
       toModName: modName
     };
@@ -389,7 +391,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       _switchNavTab(modInst);
       _onAfterViewChange(modInst);
     } else {
-      _viewChangeInfo.cacheView = false;
+      _viewChangeInfo.loadFromModCache = false;
       removeCache(modName);
       $('[data-sb-mod="' + modName + '"]', _container).remove();
       (function(modName, contentDom, args, pModName) {
