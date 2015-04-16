@@ -17,7 +17,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
 
 define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], function(require, exports, module) {
 (function() {
-  var $, _constructContentDom, _container, _currentMark, _currentModName, _init, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _scrollTop, _switchNavTab, ajaxHistory, fadeIn, fadeOut, getCached, getCurrentModName, getPreviousModName, init, removeCache, scroll, showAlert, view;
+  var $, _constructContentDom, _container, _currentMark, _currentModName, _init, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _scrollTop, _switchNavTab, _viewChangeInfo, ajaxHistory, fadeIn, fadeOut, getCached, getCurrentModName, getPreviousModName, getViewChangeInfo, init, removeCache, scroll, showAlert, view;
 
   $ = require('jquery');
 
@@ -34,6 +34,8 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
   _previousModName = '';
 
   _scrollTop = 0;
+
+  _viewChangeInfo = null;
 
   _opt = {};
 
@@ -53,10 +55,10 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     }
   };
 
-  _onAfterViewChange = function(modInst, opt) {
+  _onAfterViewChange = function(modInst) {
     var bodyClassName, modClassName;
     if (_opt.onAfterViewChange) {
-      return _opt.onAfterViewChange(modInst, opt);
+      return _opt.onAfterViewChange(modInst);
     } else {
       modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '-');
       bodyClassName = document.body.className.replace(/\bbody-sb-mod--\S+/, modClassName);
@@ -354,18 +356,19 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     modName = tmp[0].replace(new RegExp('\\/?' + _opt.modPrefix + '\\/?'), '');
     modName = modName || _opt.defaultModName;
     modInst = _modCache[modName];
-    if (typeof _opt.onBeforeChangeView === "function") {
-      _opt.onBeforeChangeView();
+    _viewChangeInfo = {
+      fromHistory: opt.fromHistory,
+      cacheView: true,
+      fromModName: pModName,
+      toModName: modName
+    };
+    if (typeof _opt.onBeforeViewChange === "function") {
+      _opt.onBeforeViewChange();
     }
     if (mark === _currentMark && modName !== 'alert') {
       if (modInst) {
         modInst.refresh();
-        _switchNavTab(modInst);
-        _onAfterViewChange(modInst, {
-          fromHistory: opt.fromHistory,
-          cacheView: true,
-          refresh: true
-        });
+        _onAfterViewChange(modInst);
       }
       return;
     }
@@ -380,14 +383,13 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     });
     if (modInst && modInst.isRenderred() && modName !== 'alert' && modName === pModName) {
       modInst.update(args, opt.modOpt);
+      _onAfterViewChange(modInst);
     } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && modInst.getArgs().join('/') === args.join('/')) {
       modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0);
       _switchNavTab(modInst);
-      _onAfterViewChange(modInst, {
-        fromHistory: opt.fromHistory,
-        cacheView: true
-      });
+      _onAfterViewChange(modInst);
     } else {
+      _viewChangeInfo.cacheView = false;
       removeCache(modName);
       $('[data-sb-mod="' + modName + '"]', _container).remove();
       (function(modName, contentDom, args, pModName) {
@@ -403,9 +405,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
             } finally {
               if (modInst) {
                 _switchNavTab(modInst);
-                _onAfterViewChange(modInst, {
-                  fromHistory: opt.fromHistory
-                });
+                _onAfterViewChange(modInst);
               } else {
                 contentDom.remove();
               }
@@ -437,6 +437,10 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         replaceState: opt.replaceState
       });
     }
+  };
+
+  getViewChangeInfo = function() {
+    return _viewChangeInfo;
   };
 
   scroll = function(top) {
@@ -472,6 +476,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     fadeIn: fadeIn,
     fadeOut: fadeOut,
     view: view,
+    getViewChangeInfo: getViewChangeInfo,
     scroll: scroll,
     showAlert: showAlert
   };

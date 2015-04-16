@@ -7,6 +7,7 @@ _currentModName = ''
 _previousMark = null
 _previousModName = ''
 _scrollTop = 0
+_viewChangeInfo = null
 _opt = {}
 _container = $(document.body)
 
@@ -20,9 +21,9 @@ _switchNavTab = (modInst) ->
 		$('nav [data-tab]', _container).removeClass 'active'
 		$('nav [data-tab="' + tabName + '"]', _container).addClass 'active'
 
-_onAfterViewChange = (modInst, opt) ->
+_onAfterViewChange = (modInst) ->
 	if _opt.onAfterViewChange
-		_opt.onAfterViewChange modInst, opt
+		_opt.onAfterViewChange modInst
 	else
 		modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '-')
 		bodyClassName = document.body.className.replace (/\bbody-sb-mod--\S+/), modClassName
@@ -252,15 +253,16 @@ view = (mark, opt) ->
 	modName = tmp[0].replace new RegExp('\\/?' + _opt.modPrefix + '\\/?'), ''
 	modName = modName || _opt.defaultModName
 	modInst = _modCache[modName]
-	_opt.onBeforeChangeView?()
+	_viewChangeInfo =
+		fromHistory: opt.fromHistory
+		cacheView: true
+		fromModName: pModName
+		toModName: modName
+	_opt.onBeforeViewChange?()
 	if mark is _currentMark and modName isnt 'alert'
 		if modInst
 			modInst.refresh()
-			_switchNavTab modInst
-			_onAfterViewChange modInst,
-				fromHistory: opt.fromHistory
-				cacheView: true
-				refresh: true
+			_onAfterViewChange modInst
 		return
 	_previousMark = _currentMark
 	_previousModName = _currentModName
@@ -271,13 +273,13 @@ view = (mark, opt) ->
 			args[i] = arg
 	if modInst and modInst.isRenderred() and modName isnt 'alert' and modName is pModName
 		modInst.update args, opt.modOpt
+		_onAfterViewChange modInst
 	else if modInst and modInst.isRenderred() and modName isnt 'alert' and not opt.modOpt and modInst.getArgs().join('/') is args.join('/')
 		modInst.fadeIn pModInst, pModInst?.fadeOut(modName)
 		_switchNavTab modInst
-		_onAfterViewChange modInst,
-			fromHistory: opt.fromHistory
-			cacheView: true
+		_onAfterViewChange modInst
 	else
+		_viewChangeInfo.cacheView = false
 		removeCache modName
 		$('[data-sb-mod="' + modName + '"]', _container).remove()
 		((modName, contentDom, args, pModName) ->
@@ -291,8 +293,7 @@ view = (mark, opt) ->
 					finally
 						if modInst
 							_switchNavTab modInst
-							_onAfterViewChange modInst,
-								fromHistory: opt.fromHistory
+							_onAfterViewChange modInst
 						else
 							contentDom.remove()
 				else
@@ -305,6 +306,9 @@ view = (mark, opt) ->
 					alert 'Failed to load module "' + (opt.failLoadModName || modName) + '"'
 		)(modName, _constructContentDom(modName, args, opt.modOpt), args, pModName)
 	ajaxHistory.setMark(mark, replaceState: opt.replaceState) if not opt.holdMark
+
+getViewChangeInfo = ->
+	_viewChangeInfo
 
 scroll = (top) ->
 	if _opt.scroll
@@ -332,5 +336,6 @@ module.exports =
 	fadeIn: fadeIn
 	fadeOut: fadeOut
 	view: view
+	getViewChangeInfo: getViewChangeInfo
 	scroll: scroll
 	showAlert: showAlert
