@@ -249,12 +249,13 @@ view = (mark, opt) ->
 	modInst = _modCache[modName]
 	_opt.onBeforeChangeView?()
 	if mark is _currentMark and modName isnt 'alert'
-		modInst?.refresh()
-		_switchNavTab modInst
-		_opt.onAfterViewChange? modInst,
-			fromHistory: opt.fromHistory
-			cacheView: true
-			refresh: true
+		if modInst
+			modInst.refresh()
+			_switchNavTab modInst
+			_opt.onAfterViewChange? modInst,
+				fromHistory: opt.fromHistory
+				cacheView: true
+				refresh: true
 		return
 	_previousMark = _currentMark
 	_previousModName = _currentModName
@@ -278,10 +279,17 @@ view = (mark, opt) ->
 			fadeIn null, contentDom, pModInst?.hasParent(modName), pModInst?.fadeOut(modName)
 			require [_opt.modBase + 'mod/' + modName + '/main'], (ModClass) ->
 				if modName is _currentModName and not _modCache[modName]
-					modInst = _modCache[modName] = new ModClass modName, contentDom, args, opt.modOpt
-					_switchNavTab modInst
-					_opt.onAfterViewChange? modInst,
-						fromHistory: opt.fromHistory
+					try
+						modInst = _modCache[modName] = new ModClass modName, contentDom, args, opt.modOpt
+					catch e
+						throw e
+					finally
+						if modInst
+							_switchNavTab modInst
+							_opt.onAfterViewChange? modInst,
+								fromHistory: opt.fromHistory
+						else
+							contentDom.remove()
 				else
 					contentDom.remove()
 			, ->

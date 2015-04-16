@@ -350,16 +350,16 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       _opt.onBeforeChangeView();
     }
     if (mark === _currentMark && modName !== 'alert') {
-      if (modInst != null) {
+      if (modInst) {
         modInst.refresh();
-      }
-      _switchNavTab(modInst);
-      if (typeof _opt.onAfterViewChange === "function") {
-        _opt.onAfterViewChange(modInst, {
-          fromHistory: opt.fromHistory,
-          cacheView: true,
-          refresh: true
-        });
+        _switchNavTab(modInst);
+        if (typeof _opt.onAfterViewChange === "function") {
+          _opt.onAfterViewChange(modInst, {
+            fromHistory: opt.fromHistory,
+            cacheView: true,
+            refresh: true
+          });
+        }
       }
       return;
     }
@@ -389,12 +389,25 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       (function(modName, contentDom, args, pModName) {
         fadeIn(null, contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, pModInst != null ? pModInst.fadeOut(modName) : void 0);
         return require([_opt.modBase + 'mod/' + modName + '/main'], function(ModClass) {
+          var e;
           if (modName === _currentModName && !_modCache[modName]) {
-            modInst = _modCache[modName] = new ModClass(modName, contentDom, args, opt.modOpt);
-            _switchNavTab(modInst);
-            return typeof _opt.onAfterViewChange === "function" ? _opt.onAfterViewChange(modInst, {
-              fromHistory: opt.fromHistory
-            }) : void 0;
+            try {
+              return modInst = _modCache[modName] = new ModClass(modName, contentDom, args, opt.modOpt);
+            } catch (_error) {
+              e = _error;
+              throw e;
+            } finally {
+              if (modInst) {
+                _switchNavTab(modInst);
+                if (typeof _opt.onAfterViewChange === "function") {
+                  _opt.onAfterViewChange(modInst, {
+                    fromHistory: opt.fromHistory
+                  });
+                }
+              } else {
+                contentDom.remove();
+              }
+            }
           } else {
             return contentDom.remove();
           }
