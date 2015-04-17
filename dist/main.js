@@ -362,7 +362,9 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       from: opt.from || 'api',
       loadFromModCache: true,
       fromModName: pModName,
-      toModName: modName
+      toModName: modName,
+      fromMark: _currentMark,
+      toMark: mark
     };
     if (typeof _opt.onBeforeViewChange === "function") {
       _opt.onBeforeViewChange();
@@ -403,6 +405,11 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
               return modInst = _modCache[modName] = new ModClass(modName, contentDom, args, opt.modOpt);
             } catch (_error) {
               e = _error;
+              if (typeof console !== "undefined" && console !== null) {
+                if (typeof console.error === "function") {
+                  console.error(e.stack);
+                }
+              }
               throw e;
             } finally {
               if (modInst) {

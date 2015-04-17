@@ -258,6 +258,8 @@ view = (mark, opt) ->
 		loadFromModCache: true
 		fromModName: pModName
 		toModName: modName
+		fromMark: _currentMark
+		toMark: mark
 	_opt.onBeforeViewChange?()
 	if mark is _currentMark and modName isnt 'alert'
 		if modInst
@@ -289,6 +291,7 @@ view = (mark, opt) ->
 					try
 						modInst = _modCache[modName] = new ModClass modName, contentDom, args, opt.modOpt
 					catch e
+						console?.error? e.stack
 						throw e
 					finally
 						if modInst
