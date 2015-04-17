@@ -17,7 +17,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
 
 define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], function(require, exports, module) {
 (function() {
-  var $, _constructContentDom, _container, _currentMark, _currentModName, _init, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _scrollTop, _switchNavTab, _viewChangeInfo, ajaxHistory, fadeIn, fadeOut, getCached, getCurrentModName, getPreviousModName, getViewChangeInfo, init, removeCache, scroll, showAlert, view;
+  var $, _constructContentDom, _container, _currentMark, _currentModName, _init, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _scrollTop, _switchNavTab, _viewChangeInfo, ajaxHistory, core;
 
   $ = require('jquery');
 
@@ -98,7 +98,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       _container = $(_opt.container);
     }
     ajaxHistory.setListener(function(mark) {
-      return view(mark, {
+      return core.view(mark, {
         from: 'history'
       });
     });
@@ -124,7 +124,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
           return history.back();
         } else if (mark.indexOf('/' + _opt.modPrefix + '/') === 0) {
           e.preventDefault();
-          return view(mark, {
+          return core.view(mark, {
             from: 'link'
           });
         }
@@ -137,358 +137,342 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     return _init = function() {};
   };
 
-  init = function(opt) {
-    if (opt) {
-      _opt = opt;
-    }
-    if (_opt.defaultModName == null) {
-      _opt.defaultModName = 'home';
-    }
-    if (_opt.modPrefix == null) {
-      _opt.modPrefix = 'view';
-    }
-    if (_opt.modBase == null) {
-      _opt.modBase = '';
-    }
-    return _init();
-  };
-
-  getPreviousModName = function() {
-    return _previousModName;
-  };
-
-  getCurrentModName = function() {
-    return _currentModName;
-  };
-
-  getCached = function(modName) {
-    return _modCache[modName];
-  };
-
-  removeCache = function(modName) {
-    return _modCache[modName] = null;
-  };
-
-  fadeIn = function(modInst, contentDom, backToParent, animateType, cb) {
-    var callback, duration, ref, ref1, ref2, res, sd, ttf;
-    if (typeof _opt.onBeforeFadeIn === "function") {
-      _opt.onBeforeFadeIn(modInst);
-    }
-    res = '';
-    animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
-    ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
-    duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
-    callback = function() {
+  core = $.extend($({}), {
+    init: function(opt) {
+      if (opt) {
+        _opt = opt;
+      }
+      if (_opt.defaultModName == null) {
+        _opt.defaultModName = 'home';
+      }
+      if (_opt.modPrefix == null) {
+        _opt.modPrefix = 'view';
+      }
+      if (_opt.modBase == null) {
+        _opt.modBase = '';
+      }
+      return _init();
+    },
+    getPreviousModName: function() {
+      return _previousModName;
+    },
+    getCurrentModName: function() {
+      return _currentModName;
+    },
+    getCached: function(modName) {
+      return _modCache[modName];
+    },
+    removeCache: function(modName) {
+      return _modCache[modName] = null;
+    },
+    fadeIn: function(modInst, contentDom, backToParent, animateType, cb) {
+      var callback, duration, ref, ref1, ref2, res, sd, ttf;
+      if (typeof _opt.onBeforeFadeIn === "function") {
+        _opt.onBeforeFadeIn(modInst);
+      }
+      res = '';
+      animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
+      ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
+      duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
+      callback = function() {
+        if (animateType === 'fade' || animateType === 'fadeIn') {
+          contentDom.show();
+        } else if (animateType === 'slide') {
+          $('.sb-mod').css({
+            zIndex: '0'
+          });
+          contentDom.css({
+            zIndex: '1'
+          });
+        }
+        return typeof cb === "function" ? cb() : void 0;
+      };
+      contentDom.show();
       if (animateType === 'fade' || animateType === 'fadeIn') {
+        contentDom.css({
+          opacity: '0'
+        });
         contentDom.show();
+        setTimeout(function() {
+          return contentDom.animate({
+            opacity: '1'
+          }, duration, ttf, callback);
+        }, 0);
       } else if (animateType === 'slide') {
+        sd = $('[data-slide-direction]', contentDom).data('slide-direction');
+        if (_opt.transformAnimation === false) {
+          if (sd === 'vu' || sd === 'vd') {
+            contentDom.css({
+              zIndex: '1',
+              top: (sd === 'vd' ? '-' : '') + '100%'
+            });
+          } else {
+            contentDom.css({
+              zIndex: '1',
+              left: (backToParent ? '-' : '') + '100%'
+            });
+          }
+          setTimeout(function() {
+            return contentDom.animate({
+              '-webkit-transform': 'translate3d(0, 0, 0)',
+              left: '0',
+              top: '0'
+            }, duration, ttf, callback);
+          }, 0);
+        } else {
+          if (sd === 'vu' || sd === 'vd') {
+            contentDom.css({
+              zIndex: '1',
+              '-webkit-transform': 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)',
+              transform: 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)'
+            });
+          } else {
+            contentDom.css({
+              zIndex: '1',
+              '-webkit-transform': 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)',
+              transform: 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)'
+            });
+          }
+          setTimeout(function() {
+            return contentDom.animate({
+              '-webkit-transform': 'translate3d(0, 0, 0)',
+              transform: 'translate3d(0, 0, 0)'
+            }, duration, ttf, callback);
+          }, 0);
+        }
+      } else {
+        callback();
+      }
+      return res;
+    },
+    fadeOut: function(modInst, contentDom, backToParent, animateType, cb) {
+      var callback, duration, ref, ref1, ref2, res, sd, ttf;
+      if (typeof _opt.onBeforeFadeOut === "function") {
+        _opt.onBeforeFadeOut(modInst);
+      }
+      res = '';
+      animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
+      ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
+      duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
+      callback = function() {
+        if (contentDom.data('sb-mod') !== _currentModName) {
+          contentDom.hide();
+        }
+        return typeof cb === "function" ? cb() : void 0;
+      };
+      if (animateType === 'fade') {
+        contentDom.css({
+          opacity: '1'
+        });
+        setTimeout(function() {
+          return contentDom.animate({
+            opacity: '0'
+          }, duration, ttf, function() {
+            contentDom.hide();
+            return typeof callback === "function" ? callback() : void 0;
+          });
+        }, 0);
+      } else if (animateType === 'slide') {
+        sd = $('[data-slide-direction]', contentDom).data('slide-direction');
+        if (sd === 'vu' || sd === 'vd') {
+          res = 'fade';
+        }
         $('.sb-mod').css({
           zIndex: '0'
         });
-        contentDom.css({
-          zIndex: '1'
-        });
-      }
-      return typeof cb === "function" ? cb() : void 0;
-    };
-    contentDom.show();
-    if (animateType === 'fade' || animateType === 'fadeIn') {
-      contentDom.css({
-        opacity: '0'
-      });
-      contentDom.show();
-      setTimeout(function() {
-        return contentDom.animate({
-          opacity: '1'
-        }, duration, ttf, callback);
-      }, 0);
-    } else if (animateType === 'slide') {
-      sd = $('[data-slide-direction]', contentDom).data('slide-direction');
-      if (_opt.transformAnimation === false) {
-        if (sd === 'vu' || sd === 'vd') {
+        if (_opt.transformAnimation === false) {
           contentDom.css({
-            zIndex: '1',
-            top: (sd === 'vd' ? '-' : '') + '100%'
-          });
-        } else {
-          contentDom.css({
-            zIndex: '1',
-            left: (backToParent ? '-' : '') + '100%'
-          });
-        }
-        setTimeout(function() {
-          return contentDom.animate({
-            '-webkit-transform': 'translate3d(0, 0, 0)',
+            zIndex: '2',
             left: '0',
             top: '0'
-          }, duration, ttf, callback);
-        }, 0);
-      } else {
-        if (sd === 'vu' || sd === 'vd') {
-          contentDom.css({
-            zIndex: '1',
-            '-webkit-transform': 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)',
-            transform: 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)'
           });
+          setTimeout(function() {
+            if (sd === 'vu' || sd === 'vd') {
+              return contentDom.animate({
+                top: (sd === 'vd' ? '-' : '') + '100%'
+              }, duration, ttf, callback);
+            } else {
+              return contentDom.animate({
+                left: (backToParent ? '' : '-') + '100%'
+              }, duration, ttf, callback);
+            }
+          }, 0);
         } else {
           contentDom.css({
-            zIndex: '1',
-            '-webkit-transform': 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)',
-            transform: 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)'
-          });
-        }
-        setTimeout(function() {
-          return contentDom.animate({
+            zIndex: '2',
             '-webkit-transform': 'translate3d(0, 0, 0)',
             transform: 'translate3d(0, 0, 0)'
-          }, duration, ttf, callback);
-        }, 0);
-      }
-    } else {
-      callback();
-    }
-    return res;
-  };
-
-  fadeOut = function(modInst, contentDom, backToParent, animateType, cb) {
-    var callback, duration, ref, ref1, ref2, res, sd, ttf;
-    if (typeof _opt.onBeforeFadeOut === "function") {
-      _opt.onBeforeFadeOut(modInst);
-    }
-    res = '';
-    animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
-    ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
-    duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
-    callback = function() {
-      if (contentDom.data('sb-mod') !== _currentModName) {
-        contentDom.hide();
-      }
-      return typeof cb === "function" ? cb() : void 0;
-    };
-    if (animateType === 'fade') {
-      contentDom.css({
-        opacity: '1'
-      });
-      setTimeout(function() {
-        return contentDom.animate({
-          opacity: '0'
-        }, duration, ttf, function() {
-          contentDom.hide();
-          return typeof callback === "function" ? callback() : void 0;
-        });
-      }, 0);
-    } else if (animateType === 'slide') {
-      sd = $('[data-slide-direction]', contentDom).data('slide-direction');
-      if (sd === 'vu' || sd === 'vd') {
-        res = 'fade';
-      }
-      $('.sb-mod').css({
-        zIndex: '0'
-      });
-      if (_opt.transformAnimation === false) {
-        contentDom.css({
-          zIndex: '2',
-          left: '0',
-          top: '0'
-        });
-        setTimeout(function() {
-          if (sd === 'vu' || sd === 'vd') {
-            return contentDom.animate({
-              top: (sd === 'vd' ? '-' : '') + '100%'
-            }, duration, ttf, callback);
-          } else {
-            return contentDom.animate({
-              left: (backToParent ? '' : '-') + '100%'
-            }, duration, ttf, callback);
-          }
-        }, 0);
-      } else {
-        contentDom.css({
-          zIndex: '2',
-          '-webkit-transform': 'translate3d(0, 0, 0)',
-          transform: 'translate3d(0, 0, 0)'
-        });
-        setTimeout(function() {
-          if (sd === 'vu' || sd === 'vd') {
-            return contentDom.animate({
-              '-webkit-transform': 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)',
-              transform: 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)'
-            }, duration, ttf, callback);
-          } else {
-            return contentDom.animate({
-              '-webkit-transform': 'translate3d(' + (backToParent ? '' : '-') + '100%, 0, 0)',
-              transform: 'translate3d(' + (backToParent ? '' : '-') + '100%, 0, 0)'
-            }, duration, ttf, callback);
-          }
-        }, 0);
-      }
-    } else {
-      callback();
-    }
-    return res;
-  };
-
-  view = function(mark, opt) {
-    var args, extArgs, modInst, modName, pModInst, pModName, tmp;
-    mark = mark.replace(/^\/+/, '');
-    opt = opt || {};
-    extArgs = opt.args || [];
-    if (opt.reload) {
-      if (ajaxHistory.isSupportHistoryState()) {
-        if (location.origin + '/' + mark === location.href) {
-          location.reload();
-        } else {
-          location.href = '/' + mark;
+          });
+          setTimeout(function() {
+            if (sd === 'vu' || sd === 'vd') {
+              return contentDom.animate({
+                '-webkit-transform': 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)',
+                transform: 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)'
+              }, duration, ttf, callback);
+            } else {
+              return contentDom.animate({
+                '-webkit-transform': 'translate3d(' + (backToParent ? '' : '-') + '100%, 0, 0)',
+                transform: 'translate3d(' + (backToParent ? '' : '-') + '100%, 0, 0)'
+              }, duration, ttf, callback);
+            }
+          }, 0);
         }
       } else {
-        ajaxHistory.setMark(mark);
-        location.reload();
+        callback();
       }
-      return;
-    }
-    if (/\/-\//.test(mark)) {
-      tmp = mark.split('/-/');
-      args = tmp[1] && tmp[1].split('/') || [];
-    } else {
-      tmp = mark.split('/args...');
-      args = tmp[1] && tmp[1].split('.') || [];
-    }
-    pModName = _currentModName;
-    pModInst = _modCache[pModName];
-    modName = tmp[0].replace(new RegExp('\\/?' + _opt.modPrefix + '\\/?'), '');
-    modName = modName || _opt.defaultModName;
-    modInst = _modCache[modName];
-    _viewChangeInfo = {
-      from: opt.from || 'api',
-      loadFromModCache: true,
-      fromModName: pModName,
-      toModName: modName,
-      fromMark: _currentMark,
-      toMark: mark
-    };
-    if (typeof _opt.onBeforeViewChange === "function") {
-      _opt.onBeforeViewChange();
-    }
-    if (mark === _currentMark && modName !== 'alert') {
-      if (modInst) {
-        modInst.refresh();
+      return res;
+    },
+    view: function(mark, opt) {
+      var args, extArgs, modInst, modName, pModInst, pModName, tmp;
+      mark = mark.replace(/^\/+/, '');
+      opt = opt || {};
+      extArgs = opt.args || [];
+      if (opt.reload) {
+        if (ajaxHistory.isSupportHistoryState()) {
+          if (location.origin + '/' + mark === location.href) {
+            location.reload();
+          } else {
+            location.href = '/' + mark;
+          }
+        } else {
+          ajaxHistory.setMark(mark);
+          location.reload();
+        }
+        return;
+      }
+      if (/\/-\//.test(mark)) {
+        tmp = mark.split('/-/');
+        args = tmp[1] && tmp[1].split('/') || [];
+      } else {
+        tmp = mark.split('/args...');
+        args = tmp[1] && tmp[1].split('.') || [];
+      }
+      pModName = _currentModName;
+      pModInst = _modCache[pModName];
+      modName = tmp[0].replace(new RegExp('\\/?' + _opt.modPrefix + '\\/?'), '');
+      modName = modName || _opt.defaultModName;
+      modInst = _modCache[modName];
+      _viewChangeInfo = {
+        from: opt.from || 'api',
+        loadFromModCache: true,
+        fromModName: pModName,
+        toModName: modName,
+        fromMark: _currentMark,
+        toMark: mark
+      };
+      if (typeof _opt.onBeforeViewChange === "function") {
+        _opt.onBeforeViewChange();
+      }
+      if (mark === _currentMark && modName !== 'alert') {
+        if (modInst) {
+          modInst.refresh();
+          _onAfterViewChange(modInst);
+          core.trigger('afterViewChange', modInst);
+        }
+        return;
+      }
+      _previousMark = _currentMark;
+      _previousModName = _currentModName;
+      _currentMark = mark;
+      _currentModName = modName;
+      $.each(extArgs, function(i, arg) {
+        if (arg) {
+          return args[i] = arg;
+        }
+      });
+      if (modInst && modInst.isRenderred() && modName !== 'alert' && modName === pModName) {
+        modInst.update(args, opt.modOpt);
         _onAfterViewChange(modInst);
-      }
-      return;
-    }
-    _previousMark = _currentMark;
-    _previousModName = _currentModName;
-    _currentMark = mark;
-    _currentModName = modName;
-    $.each(extArgs, function(i, arg) {
-      if (arg) {
-        return args[i] = arg;
-      }
-    });
-    if (modInst && modInst.isRenderred() && modName !== 'alert' && modName === pModName) {
-      modInst.update(args, opt.modOpt);
-      _onAfterViewChange(modInst);
-    } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && modInst.getArgs().join('/') === args.join('/')) {
-      modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0);
-      _switchNavTab(modInst);
-      _onAfterViewChange(modInst);
-    } else {
-      _viewChangeInfo.loadFromModCache = false;
-      removeCache(modName);
-      $('[data-sb-mod="' + modName + '"]', _container).remove();
-      (function(modName, contentDom, args, pModName) {
-        fadeIn(null, contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, pModInst != null ? pModInst.fadeOut(modName) : void 0);
-        return require([_opt.modBase + 'mod/' + modName + '/main'], function(ModClass) {
-          var e;
-          if (modName === _currentModName && !_modCache[modName]) {
-            try {
-              return modInst = _modCache[modName] = new ModClass(modName, contentDom, args, opt.modOpt);
-            } catch (_error) {
-              e = _error;
-              if (typeof console !== "undefined" && console !== null) {
-                if (typeof console.error === "function") {
-                  console.error(e.stack);
+        core.trigger('afterViewChange', modInst);
+      } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && modInst.getArgs().join('/') === args.join('/')) {
+        modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0);
+        _switchNavTab(modInst);
+        _onAfterViewChange(modInst);
+        core.trigger('afterViewChange', modInst);
+      } else {
+        _viewChangeInfo.loadFromModCache = false;
+        core.removeCache(modName);
+        $('[data-sb-mod="' + modName + '"]', _container).remove();
+        (function(modName, contentDom, args, pModName) {
+          core.fadeIn(null, contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, pModInst != null ? pModInst.fadeOut(modName) : void 0);
+          return require([_opt.modBase + 'mod/' + modName + '/main'], function(ModClass) {
+            var e;
+            if (modName === _currentModName && !_modCache[modName]) {
+              try {
+                return modInst = _modCache[modName] = new ModClass(modName, contentDom, args, opt.modOpt);
+              } catch (_error) {
+                e = _error;
+                if (typeof console !== "undefined" && console !== null) {
+                  if (typeof console.error === "function") {
+                    console.error(e.stack);
+                  }
+                }
+                throw e;
+              } finally {
+                if (modInst) {
+                  _switchNavTab(modInst);
+                  _onAfterViewChange(modInst);
+                  core.trigger('afterViewChange', modInst);
+                } else {
+                  contentDom.remove();
                 }
               }
-              throw e;
-            } finally {
-              if (modInst) {
-                _switchNavTab(modInst);
-                _onAfterViewChange(modInst);
-              } else {
-                contentDom.remove();
+            } else {
+              return contentDom.remove();
+            }
+          }, function() {
+            if (modName !== 'alert') {
+              contentDom.remove();
+              if (modName === _currentModName) {
+                return core.showAlert({
+                  type: 'error',
+                  subType: 'load_mod_fail',
+                  failLoadModName: modName
+                }, {
+                  failLoadModName: modName,
+                  holdMark: true
+                });
               }
+            } else {
+              return alert('Failed to load module "' + (opt.failLoadModName || modName) + '"');
             }
-          } else {
-            return contentDom.remove();
-          }
-        }, function() {
-          if (modName !== 'alert') {
-            contentDom.remove();
-            if (modName === _currentModName) {
-              return showAlert({
-                type: 'error',
-                subType: 'load_mod_fail',
-                failLoadModName: modName
-              }, {
-                failLoadModName: modName,
-                holdMark: true
-              });
-            }
-          } else {
-            return alert('Failed to load module "' + (opt.failLoadModName || modName) + '"');
-          }
-        });
-      })(modName, _constructContentDom(modName, args, opt.modOpt), args, pModName);
-    }
-    if (!opt.holdMark) {
-      return ajaxHistory.setMark(mark, {
-        replaceState: opt.replaceState
-      });
-    }
-  };
-
-  getViewChangeInfo = function() {
-    return _viewChangeInfo;
-  };
-
-  scroll = function(top) {
-    var y;
-    if (_opt.scroll) {
-      return _opt.scroll(top);
-    } else {
-      y = top - _scrollTop;
-      _scrollTop = top;
-      if (y > 0 && top > 44) {
-        return $('[data-sb-mod="' + getCurrentModName() + '"]').addClass('sb-hide-header');
-      } else {
-        return $('[data-sb-mod="' + getCurrentModName() + '"]').removeClass('sb-hide-header');
+          });
+        })(modName, _constructContentDom(modName, args, opt.modOpt), args, pModName);
       }
+      if (!opt.holdMark) {
+        return ajaxHistory.setMark(mark, {
+          replaceState: opt.replaceState
+        });
+      }
+    },
+    getViewChangeInfo: function() {
+      return _viewChangeInfo;
+    },
+    scroll: function(top) {
+      var y;
+      if (_opt.scroll) {
+        return _opt.scroll(top);
+      } else {
+        y = top - _scrollTop;
+        _scrollTop = top;
+        if (y > 0 && top > 44) {
+          return $('[data-sb-mod="' + core.getCurrentModName() + '"]').addClass('sb-hide-header');
+        } else {
+          return $('[data-sb-mod="' + core.getCurrentModName() + '"]').removeClass('sb-hide-header');
+        }
+      }
+    },
+    showAlert: function(opt, viewOpt) {
+      opt = opt || {
+        type: 'error'
+      };
+      viewOpt = viewOpt || {};
+      viewOpt.modOpt = opt;
+      return core.view('view/alert/-/' + (new Date().getTime()), viewOpt);
     }
-  };
+  });
 
-  showAlert = function(opt, viewOpt) {
-    opt = opt || {
-      type: 'error'
-    };
-    viewOpt = viewOpt || {};
-    viewOpt.modOpt = opt;
-    return view('view/alert/-/' + (new Date().getTime()), viewOpt);
-  };
-
-  module.exports = {
-    init: init,
-    getPreviousModName: getPreviousModName,
-    getCurrentModName: getCurrentModName,
-    getCached: getCached,
-    removeCache: removeCache,
-    fadeIn: fadeIn,
-    fadeOut: fadeOut,
-    view: view,
-    getViewChangeInfo: getViewChangeInfo,
-    scroll: scroll,
-    showAlert: showAlert
-  };
+  module.exports = core;
 
 }).call(this);
 
