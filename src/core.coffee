@@ -88,8 +88,9 @@ core = $.extend $({}),
 	init: (opt) ->
 		_opt = opt if opt
 		_opt.defaultModName ?= 'home'
-		_opt.modPrefix ?= 'view'
 		_opt.modBase ?= ''
+		_opt.modPrefix ?= 'view'
+		_opt.modPrefix = _opt.modPrefix.replace /^\/+|\/+$/g, ''
 		_init()
 
 	getPreviousModName: () ->
@@ -230,7 +231,7 @@ core = $.extend $({}),
 		res
 
 	view: (mark, opt) ->
-		mark = mark.replace /^\/+/, ''
+		mark = mark.replace /^\/+|\/+$/g, ''
 		opt = opt || {}
 		extArgs = opt.args || []
 		if opt.reload
@@ -251,7 +252,8 @@ core = $.extend $({}),
 			args = tmp[1] && tmp[1].split('.') || []
 		pModName = _currentModName
 		pModInst = _modCache[pModName]
-		modName = tmp[0].replace new RegExp('\\/?' + _opt.modPrefix + '\\/?'), ''
+		if mark.indexOf(_opt.modPrefix + '/') is 0
+			modName = tmp[0].replace new RegExp(_opt.modPrefix + '\\/?'), ''
 		modName = modName || _opt.defaultModName
 		modInst = _modCache[modName]
 		_viewChangeInfo =

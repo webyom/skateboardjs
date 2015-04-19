@@ -145,12 +145,13 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       if (_opt.defaultModName == null) {
         _opt.defaultModName = 'home';
       }
-      if (_opt.modPrefix == null) {
-        _opt.modPrefix = 'view';
-      }
       if (_opt.modBase == null) {
         _opt.modBase = '';
       }
+      if (_opt.modPrefix == null) {
+        _opt.modPrefix = 'view';
+      }
+      _opt.modPrefix = _opt.modPrefix.replace(/^\/+|\/+$/g, '');
       return _init();
     },
     getPreviousModName: function() {
@@ -324,7 +325,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     },
     view: function(mark, opt) {
       var args, extArgs, modInst, modName, pModInst, pModName, tmp;
-      mark = mark.replace(/^\/+/, '');
+      mark = mark.replace(/^\/+|\/+$/g, '');
       opt = opt || {};
       extArgs = opt.args || [];
       if (opt.reload) {
@@ -349,7 +350,9 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       }
       pModName = _currentModName;
       pModInst = _modCache[pModName];
-      modName = tmp[0].replace(new RegExp('\\/?' + _opt.modPrefix + '\\/?'), '');
+      if (mark.indexOf(_opt.modPrefix + '/') === 0) {
+        modName = tmp[0].replace(new RegExp(_opt.modPrefix + '\\/?'), '');
+      }
       modName = modName || _opt.defaultModName;
       modInst = _modCache[modName];
       _viewChangeInfo = {
