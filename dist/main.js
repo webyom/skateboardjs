@@ -325,7 +325,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     },
     view: function(mark, opt) {
       var args, extArgs, modInst, modName, pModInst, pModName, tmp;
-      mark = mark.replace(/^\/+|\/+$/g, '');
+      mark = mark.replace(/^\/+/, '');
       opt = opt || {};
       extArgs = opt.args || [];
       if (opt.reload) {
@@ -341,7 +341,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         }
         return;
       }
-      if (/\/-\//.test(mark)) {
+      if (mark.indexOf('/-/') > 0) {
         tmp = mark.split('/-/');
         args = tmp[1] && tmp[1].split('/') || [];
       } else {
@@ -351,7 +351,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       pModName = _currentModName;
       pModInst = _modCache[pModName];
       if (mark.indexOf(_opt.modPrefix + '/') === 0) {
-        modName = tmp[0].replace(new RegExp(_opt.modPrefix + '\\/?'), '');
+        modName = tmp[0].replace(_opt.modPrefix, '').replace(/^\/+|\/+$/g, '');
       }
       modName = modName || _opt.defaultModName;
       modInst = _modCache[modName];

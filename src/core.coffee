@@ -231,7 +231,7 @@ core = $.extend $({}),
 		res
 
 	view: (mark, opt) ->
-		mark = mark.replace /^\/+|\/+$/g, ''
+		mark = mark.replace /^\/+/, ''
 		opt = opt || {}
 		extArgs = opt.args || []
 		if opt.reload
@@ -244,7 +244,7 @@ core = $.extend $({}),
 				ajaxHistory.setMark mark
 				location.reload()
 			return
-		if (/\/-\//).test mark
+		if mark.indexOf('/-/') > 0
 			tmp = mark.split '/-/'
 			args = tmp[1] && tmp[1].split('/') || []
 		else
@@ -253,7 +253,7 @@ core = $.extend $({}),
 		pModName = _currentModName
 		pModInst = _modCache[pModName]
 		if mark.indexOf(_opt.modPrefix + '/') is 0
-			modName = tmp[0].replace new RegExp(_opt.modPrefix + '\\/?'), ''
+			modName = tmp[0].replace(_opt.modPrefix, '').replace(/^\/+|\/+$/g, '')
 		modName = modName || _opt.defaultModName
 		modInst = _modCache[modName]
 		_viewChangeInfo =
