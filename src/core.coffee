@@ -70,13 +70,13 @@ _init = ->
 		if el.tagName isnt 'A'
 			el = $(el).closest('a')[0]
 		if el and el.tagName is 'A'
-			mark = el.pathname
+			mark = el.pathname?.replace /^\/+/, ''
 			if el.target
 				return
 			if mark is '/:back'
 				e.preventDefault()
 				history.back()
-			else if mark.indexOf('/' + _opt.modPrefix + '/') is 0
+			else if mark?.indexOf(_opt.modPrefix + '/') is 0
 				e.preventDefault()
 				core.view mark, from: 'link'
 	.on 'click', '[data-refresh-btn]', () ->
@@ -112,9 +112,7 @@ core = $.extend $({}),
 		ttf = _opt.animate?.timingFunction || 'linear'
 		duration = _opt.animate?.duration || 300
 		callback = ->
-			if animateType is 'fade' or animateType is 'fadeIn'
-				contentDom.show()
-			else if animateType is 'slide'
+			if animateType is 'slide'
 				$('.sb-mod').css
 					zIndex: '0'
 				contentDom.css

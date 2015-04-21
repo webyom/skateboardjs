@@ -107,7 +107,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     });
     t = new Date();
     $(document.body).on('click', function(e) {
-      var el, mark;
+      var el, mark, ref;
       el = e.target;
       mark;
       t = new Date();
@@ -115,14 +115,14 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         el = $(el).closest('a')[0];
       }
       if (el && el.tagName === 'A') {
-        mark = el.pathname;
+        mark = (ref = el.pathname) != null ? ref.replace(/^\/+/, '') : void 0;
         if (el.target) {
           return;
         }
         if (mark === '/:back') {
           e.preventDefault();
           return history.back();
-        } else if (mark.indexOf('/' + _opt.modPrefix + '/') === 0) {
+        } else if ((mark != null ? mark.indexOf(_opt.modPrefix + '/') : void 0) === 0) {
           e.preventDefault();
           return core.view(mark, {
             from: 'link'
@@ -176,9 +176,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
       duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
       callback = function() {
-        if (animateType === 'fade' || animateType === 'fadeIn') {
-          contentDom.show();
-        } else if (animateType === 'slide') {
+        if (animateType === 'slide') {
           $('.sb-mod').css({
             zIndex: '0'
           });
