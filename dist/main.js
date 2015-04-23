@@ -119,7 +119,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         if (el.target) {
           return;
         }
-        if (mark === '/:back') {
+        if (mark === ':back') {
           e.preventDefault();
           return history.back();
         } else if ((mark != null ? mark.indexOf(_opt.modPrefix + '/') : void 0) === 0) {

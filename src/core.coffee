@@ -73,7 +73,7 @@ _init = ->
 			mark = el.pathname?.replace /^\/+/, ''
 			if el.target
 				return
-			if mark is '/:back'
+			if mark is ':back'
 				e.preventDefault()
 				history.back()
 			else if mark?.indexOf(_opt.modPrefix + '/') is 0
