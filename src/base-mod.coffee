@@ -113,6 +113,9 @@ class BaseMod
 	$: (s) ->
 		$ s, @_contentDom
 
+	getModName: ->
+		@_modName
+
 	getArgs: ->
 		@_args
 

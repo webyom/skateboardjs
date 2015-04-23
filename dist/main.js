@@ -411,6 +411,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
                 throw e;
               } finally {
                 if (modInst) {
+                  modInst._afterFadeIn(pModInst);
                   _switchNavTab(modInst);
                   _onAfterViewChange(modInst);
                   core.trigger('afterViewChange', modInst);
@@ -776,6 +777,10 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
 
     BaseMod.prototype.$ = function(s) {
       return $(s, this._contentDom);
+    };
+
+    BaseMod.prototype.getModName = function() {
+      return this._modName;
     };
 
     BaseMod.prototype.getArgs = function() {

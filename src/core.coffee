@@ -299,6 +299,7 @@ core = $.extend $({}),
 							throw e
 						finally
 							if modInst
+								modInst._afterFadeIn pModInst
 								_switchNavTab modInst
 								_onAfterViewChange modInst
 								core.trigger 'afterViewChange', modInst
