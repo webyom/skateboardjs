@@ -21,9 +21,9 @@ _switchNavTab = (modInst) ->
 		$('nav [data-tab]', _container).removeClass 'active'
 		$('nav [data-tab="' + tabName + '"]', _container).addClass 'active'
 
-_onAfterViewChange = (modInst) ->
+_onAfterViewChange = (modName, modInst) ->
 	if _opt.onAfterViewChange
-		_opt.onAfterViewChange modInst
+		_opt.onAfterViewChange modName, modInst
 	else
 		modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '-')
 		bodyClassName = document.body.className.replace (/\bbody-sb-mod--\S+/), modClassName
@@ -261,11 +261,11 @@ core = $.extend $({}),
 			toModName: modName
 			fromMark: _currentMark
 			toMark: mark
-		_opt.onBeforeViewChange?()
+		return if _opt.onBeforeViewChange?(modName, modInst) is false
 		if mark is _currentMark and modName isnt 'alert'
 			if modInst
 				modInst.refresh()
-				_onAfterViewChange modInst
+				_onAfterViewChange modName, modInst
 				core.trigger 'afterViewChange', modInst
 			return
 		_previousMark = _currentMark
@@ -277,19 +277,28 @@ core = $.extend $({}),
 				args[i] = arg
 		if modInst and modInst.isRenderred() and modName isnt 'alert' and modName is pModName
 			modInst.update args, opt.modOpt
-			_onAfterViewChange modInst
+			_onAfterViewChange modName, modInst
 			core.trigger 'afterViewChange', modInst
 		else if modInst and modInst.isRenderred() and modName isnt 'alert' and not opt.modOpt and modInst.getArgs().join('/') is args.join('/')
 			modInst.fadeIn pModInst, pModInst?.fadeOut(modName)
 			_switchNavTab modInst
-			_onAfterViewChange modInst
+			_onAfterViewChange modName, modInst
 			core.trigger 'afterViewChange', modInst
 		else
 			_viewChangeInfo.loadFromModCache = false
 			core.removeCache modName
 			$('[data-sb-mod="' + modName + '"]', _container).remove()
-			((modName, contentDom, args, pModName) ->
+			if _opt.initContentDom and modName is _opt.defaultModName
+				contentDom = $(_opt.initContentDom)
+				contentDom.attr 'data-mod-name', modName
+				_opt.initContentDom = null
+			else
+				if _opt.initContentDom
+					$(_opt.initContentDom).remove()
+					_opt.initContentDom = null
+				contentDom = _constructContentDom(modName, args, opt.modOpt)
 				core.fadeIn null, contentDom, pModInst?.hasParent(modName), pModInst?.fadeOut(modName)
+			((modName, contentDom, args, pModName) ->
 				require [_opt.modBase + 'mod/' + modName + '/main'], (ModClass) ->
 					if modName is _currentModName and not _modCache[modName]
 						try
@@ -301,7 +310,7 @@ core = $.extend $({}),
 							if modInst
 								modInst._afterFadeIn pModInst
 								_switchNavTab modInst
-								_onAfterViewChange modInst
+								_onAfterViewChange modName, modInst
 								core.trigger 'afterViewChange', modInst
 							else
 								contentDom.remove()
@@ -313,7 +322,7 @@ core = $.extend $({}),
 						core.showAlert({type: 'error', subType: 'load_mod_fail', failLoadModName: modName}, {failLoadModName: modName, holdMark: true}) if modName is _currentModName
 					else
 						alert 'Failed to load module "' + (opt.failLoadModName || modName) + '"'
-			)(modName, _constructContentDom(modName, args, opt.modOpt), args, pModName)
+			)(modName, contentDom, args, pModName)
 		ajaxHistory.setMark(mark, replaceState: opt.replaceState) if not opt.holdMark
 
 	getViewChangeInfo: ->

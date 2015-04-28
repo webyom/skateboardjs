@@ -55,10 +55,10 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     }
   };
 
-  _onAfterViewChange = function(modInst) {
+  _onAfterViewChange = function(modName, modInst) {
     var bodyClassName, modClassName;
     if (_opt.onAfterViewChange) {
-      return _opt.onAfterViewChange(modInst);
+      return _opt.onAfterViewChange(modName, modInst);
     } else {
       modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '-');
       bodyClassName = document.body.className.replace(/\bbody-sb-mod--\S+/, modClassName);
@@ -322,7 +322,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       return res;
     },
     view: function(mark, opt) {
-      var args, extArgs, modInst, modName, pModInst, pModName, tmp;
+      var args, contentDom, extArgs, modInst, modName, pModInst, pModName, tmp;
       mark = mark.replace(/^\/+/, '');
       opt = opt || {};
       extArgs = opt.args || [];
@@ -361,13 +361,13 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         fromMark: _currentMark,
         toMark: mark
       };
-      if (typeof _opt.onBeforeViewChange === "function") {
-        _opt.onBeforeViewChange();
+      if ((typeof _opt.onBeforeViewChange === "function" ? _opt.onBeforeViewChange(modName, modInst) : void 0) === false) {
+        return;
       }
       if (mark === _currentMark && modName !== 'alert') {
         if (modInst) {
           modInst.refresh();
-          _onAfterViewChange(modInst);
+          _onAfterViewChange(modName, modInst);
           core.trigger('afterViewChange', modInst);
         }
         return;
@@ -383,19 +383,30 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       });
       if (modInst && modInst.isRenderred() && modName !== 'alert' && modName === pModName) {
         modInst.update(args, opt.modOpt);
-        _onAfterViewChange(modInst);
+        _onAfterViewChange(modName, modInst);
         core.trigger('afterViewChange', modInst);
       } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && modInst.getArgs().join('/') === args.join('/')) {
         modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0);
         _switchNavTab(modInst);
-        _onAfterViewChange(modInst);
+        _onAfterViewChange(modName, modInst);
         core.trigger('afterViewChange', modInst);
       } else {
         _viewChangeInfo.loadFromModCache = false;
         core.removeCache(modName);
         $('[data-sb-mod="' + modName + '"]', _container).remove();
-        (function(modName, contentDom, args, pModName) {
+        if (_opt.initContentDom && modName === _opt.defaultModName) {
+          contentDom = $(_opt.initContentDom);
+          contentDom.attr('data-mod-name', modName);
+          _opt.initContentDom = null;
+        } else {
+          if (_opt.initContentDom) {
+            $(_opt.initContentDom).remove();
+            _opt.initContentDom = null;
+          }
+          contentDom = _constructContentDom(modName, args, opt.modOpt);
           core.fadeIn(null, contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, pModInst != null ? pModInst.fadeOut(modName) : void 0);
+        }
+        (function(modName, contentDom, args, pModName) {
           return require([_opt.modBase + 'mod/' + modName + '/main'], function(ModClass) {
             var e;
             if (modName === _currentModName && !_modCache[modName]) {
@@ -413,7 +424,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
                 if (modInst) {
                   modInst._afterFadeIn(pModInst);
                   _switchNavTab(modInst);
-                  _onAfterViewChange(modInst);
+                  _onAfterViewChange(modName, modInst);
                   core.trigger('afterViewChange', modInst);
                 } else {
                   contentDom.remove();
@@ -439,7 +450,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
               return alert('Failed to load module "' + (opt.failLoadModName || modName) + '"');
             }
           });
-        })(modName, _constructContentDom(modName, args, opt.modOpt), args, pModName);
+        })(modName, contentDom, args, pModName);
       }
       if (!opt.holdMark) {
         return ajaxHistory.setMark(mark, {
