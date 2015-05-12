@@ -78,7 +78,8 @@ _init = ->
 				history.back()
 			else if mark?.indexOf(_opt.modPrefix + '/') is 0
 				e.preventDefault()
-				core.view mark, from: 'link'
+				core.view mark, 
+					from: 'link'
 	.on 'click', '[data-refresh-btn]', () ->
 		modInst = _modCache[_currentModName]
 		modInst?.refresh()
@@ -256,6 +257,7 @@ core = $.extend $({}),
 		modInst = _modCache[modName]
 		_viewChangeInfo =
 			from: opt.from || 'api'
+			scrollTop: $(window).scrollTop()
 			loadFromModCache: true
 			fromModName: pModName
 			toModName: modName

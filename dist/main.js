@@ -355,6 +355,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       modInst = _modCache[modName];
       _viewChangeInfo = {
         from: opt.from || 'api',
+        scrollTop: $(window).scrollTop(),
         loadFromModCache: true,
         fromModName: pModName,
         toModName: modName,
