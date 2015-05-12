@@ -94,6 +94,9 @@ core = $.extend $({}),
 		_opt.modPrefix = _opt.modPrefix.replace /^\/+|\/+$/g, ''
 		_init()
 
+	modCacheable: ->
+		_opt.modCacheable
+
 	getPreviousModName: () ->
 		_previousModName
 

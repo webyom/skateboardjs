@@ -30,8 +30,9 @@ class BaseMod
 			@_contentDom.off k.shift(), k.join(' '), @[v]
 
 	_ifNotCachable: (relModName, callback, elseCallback) ->
-		if typeof @cachable isnt 'undefined'
-			if @cachable
+		cachable = if typeof @cachable isnt 'undefined' then @cachable else core.modCacheable()
+		if typeof cachable isnt 'undefined'
+			if cachable
 				elseCallback?()
 			else
 				callback?()

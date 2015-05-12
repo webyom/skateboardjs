@@ -154,6 +154,9 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       _opt.modPrefix = _opt.modPrefix.replace(/^\/+|\/+$/g, '');
       return _init();
     },
+    modCacheable: function() {
+      return _opt.modCacheable;
+    },
     getPreviousModName: function() {
       return _previousModName;
     },
@@ -679,9 +682,10 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
     };
 
     BaseMod.prototype._ifNotCachable = function(relModName, callback, elseCallback) {
-      var relModInst;
-      if (typeof this.cachable !== 'undefined') {
-        if (this.cachable) {
+      var cachable, relModInst;
+      cachable = typeof this.cachable !== 'undefined' ? this.cachable : core.modCacheable();
+      if (typeof cachable !== 'undefined') {
+        if (cachable) {
           return typeof elseCallback === "function" ? elseCallback() : void 0;
         } else {
           return typeof callback === "function" ? callback() : void 0;
