@@ -291,7 +291,7 @@ core = $.extend $({}),
 		and modInst.isRenderred() \
 		and modName isnt 'alert' \
 		and not opt.modOpt \
-		and (_viewChangeInfo.from is 'history' or _opt.alwaysUseCache) \
+		and (_viewChangeInfo.from is 'history' or _opt.alwaysUseCache or modInst.alwaysUseCache) \
 		and modInst.getArgs().join('/') is args.join('/')
 			modInst.fadeIn pModInst, pModInst?.fadeOut(modName)
 			_switchNavTab modInst

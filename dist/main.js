@@ -389,7 +389,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         modInst.update(args, opt.modOpt);
         _onAfterViewChange(modName, modInst);
         core.trigger('afterViewChange', modInst);
-      } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (_viewChangeInfo.from === 'history' || _opt.alwaysUseCache) && modInst.getArgs().join('/') === args.join('/')) {
+      } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (_viewChangeInfo.from === 'history' || _opt.alwaysUseCache || modInst.alwaysUseCache) && modInst.getArgs().join('/') === args.join('/')) {
         modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0);
         _switchNavTab(modInst);
         _onAfterViewChange(modName, modInst);
