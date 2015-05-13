@@ -280,11 +280,19 @@ core = $.extend $({}),
 		$.each extArgs, (i, arg) ->
 			if arg
 				args[i] = arg
-		if modInst and modInst.isRenderred() and modName isnt 'alert' and modName is pModName
+		if modInst \
+		and modInst.isRenderred() \
+		and modName isnt 'alert' \
+		and modName is pModName
 			modInst.update args, opt.modOpt
 			_onAfterViewChange modName, modInst
 			core.trigger 'afterViewChange', modInst
-		else if modInst and modInst.isRenderred() and modName isnt 'alert' and not opt.modOpt and modInst.getArgs().join('/') is args.join('/')
+		else if modInst \
+		and modInst.isRenderred() \
+		and modName isnt 'alert' \
+		and not opt.modOpt \
+		and (_viewChangeInfo.from is 'history' or _opt.alwaysUseCache) \
+		and modInst.getArgs().join('/') is args.join('/')
 			modInst.fadeIn pModInst, pModInst?.fadeOut(modName)
 			_switchNavTab modInst
 			_onAfterViewChange modName, modInst
