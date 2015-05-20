@@ -78,7 +78,7 @@ _init = ->
 				history.back()
 			else if mark?.indexOf(_opt.modPrefix + '/') is 0
 				e.preventDefault()
-				core.view mark, 
+				core.view mark,
 					from: 'link'
 	.on 'click', '[data-refresh-btn]', () ->
 		modInst = _modCache[_currentModName]
@@ -252,6 +252,9 @@ core = $.extend $({}),
 		else
 			tmp = mark.split '/args...'
 			args = tmp[1] && tmp[1].split('.') || []
+		$.each extArgs, (i, arg) ->
+			if arg
+				args[i] = arg
 		pModName = _currentModName
 		pModInst = _modCache[pModName]
 		if mark.indexOf(_opt.modPrefix + '/') is 0
@@ -266,6 +269,8 @@ core = $.extend $({}),
 			toModName: modName
 			fromMark: _currentMark
 			toMark: mark
+			args: args
+			opt: opt.modOpt
 		return if _opt.onBeforeViewChange?(modName, modInst) is false
 		if mark is _currentMark and modName isnt 'alert'
 			if modInst
@@ -277,9 +282,6 @@ core = $.extend $({}),
 		_previousModName = _currentModName
 		_currentMark = mark
 		_currentModName = modName
-		$.each extArgs, (i, arg) ->
-			if arg
-				args[i] = arg
 		if modInst \
 		and modInst.isRenderred() \
 		and modName isnt 'alert' \
