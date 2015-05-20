@@ -300,6 +300,7 @@ core = $.extend $({}),
 			_onAfterViewChange modName, modInst
 			core.trigger 'afterViewChange', modInst
 		else
+			modInst?.destroy()
 			_viewChangeInfo.loadFromModCache = false
 			core.removeCache modName
 			$('[data-sb-mod="' + modName + '"]', _container).remove()

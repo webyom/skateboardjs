@@ -42,7 +42,7 @@ init = (opt) ->
 		$(window).on 'hashchange', _checkMark
 	_checkMark()
 	init = ->
-	
+
 setListener = (listener, bind) ->
 	_listener = if typeof listener is 'function' then listener else null
 	_listenerBind = bind || null
@@ -80,7 +80,7 @@ getPrevMark = () ->
 
 isSupportHistoryState = () ->
 	_isSupportHistoryState
-	
+
 module.exports =
 	init: init
 	setListener: setListener
