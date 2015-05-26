@@ -60,7 +60,7 @@ class BaseMod
 
 	_afterFadeOut: (relModName) ->
 		@_ifNotCachable relModName, =>
-			@destroy();
+			@destroy()
 
 	_renderHeader: (data) ->
 		if @_contentDom

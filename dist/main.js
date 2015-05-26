@@ -7,6 +7,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
   BaseMod = require('./base-mod');
 
   module.exports = {
+    version: '0.1.24',
     core: core,
     BaseMod: BaseMod
   };
@@ -174,155 +175,168 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       if (typeof _opt.onBeforeFadeIn === "function") {
         _opt.onBeforeFadeIn(modInst);
       }
-      res = '';
-      animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
-      ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
-      duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
-      callback = function() {
-        if (animateType === 'slide') {
-          $('.sb-mod').css({
-            zIndex: '0'
-          });
-          contentDom.css({
-            zIndex: '1'
-          });
-        }
-        return typeof cb === "function" ? cb() : void 0;
-      };
-      contentDom.show();
-      if (animateType === 'fade' || animateType === 'fadeIn') {
-        contentDom.css({
-          opacity: '0'
-        });
-        contentDom.show();
-        setTimeout(function() {
-          return contentDom.animate({
-            opacity: '1'
-          }, duration, ttf, callback);
-        }, 0);
-      } else if (animateType === 'slide') {
-        sd = $('[data-slide-direction]', contentDom).data('slide-direction');
-        if (_opt.transformAnimation === false) {
-          if (sd === 'vu' || sd === 'vd') {
-            contentDom.css({
-              zIndex: '1',
-              top: (sd === 'vd' ? '-' : '') + '100%'
-            });
-          } else {
-            contentDom.css({
-              zIndex: '1',
-              left: (backToParent ? '-' : '') + '100%'
-            });
-          }
-          setTimeout(function() {
-            return contentDom.animate({
-              '-webkit-transform': 'translate3d(0, 0, 0)',
-              left: '0',
-              top: '0'
-            }, duration, ttf, callback);
-          }, 0);
-        } else {
-          if (sd === 'vu' || sd === 'vd') {
-            contentDom.css({
-              zIndex: '1',
-              '-webkit-transform': 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)',
-              transform: 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)'
-            });
-          } else {
-            contentDom.css({
-              zIndex: '1',
-              '-webkit-transform': 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)',
-              transform: 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)'
-            });
-          }
-          setTimeout(function() {
-            return contentDom.animate({
-              '-webkit-transform': 'translate3d(0, 0, 0)',
-              transform: 'translate3d(0, 0, 0)'
-            }, duration, ttf, callback);
-          }, 0);
-        }
+      if (_opt.fadeIn) {
+        return _opt.fadeIn(modInst, contentDom, backToParent, animateType, cb);
       } else {
-        callback();
+        res = '';
+        animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
+        ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
+        duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
+        callback = function() {
+          if (animateType === 'slide') {
+            $('.sb-mod').css({
+              zIndex: '0'
+            });
+            contentDom.css({
+              zIndex: '2'
+            });
+          }
+          return typeof cb === "function" ? cb() : void 0;
+        };
+        contentDom.show();
+        if (animateType === 'fade' || animateType === 'fadeIn') {
+          contentDom.css({
+            opacity: '0'
+          });
+          contentDom.show();
+          setTimeout(function() {
+            return contentDom.animate({
+              opacity: '1'
+            }, duration, ttf, callback);
+          }, 0);
+        } else if (animateType === 'slide') {
+          sd = $('[data-slide-direction]', contentDom).data('slide-direction');
+          if (_opt.transformAnimation === false) {
+            if (sd === 'vu' || sd === 'vd') {
+              contentDom.css({
+                zIndex: '2',
+                top: (sd === 'vd' ? '-' : '') + '100%'
+              });
+            } else {
+              contentDom.css({
+                zIndex: '2',
+                left: (backToParent ? '-' : '') + '100%'
+              });
+            }
+            setTimeout(function() {
+              return contentDom.animate({
+                left: '0',
+                top: '0'
+              }, duration, ttf, callback);
+            }, 0);
+          } else {
+            if (sd === 'vu' || sd === 'vd') {
+              contentDom.css({
+                zIndex: '2',
+                '-webkit-transform': 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)',
+                transform: 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)'
+              });
+            } else {
+              contentDom.css({
+                zIndex: '2',
+                '-webkit-transform': 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)',
+                transform: 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)'
+              });
+            }
+            setTimeout(function() {
+              return contentDom.animate({
+                '-webkit-transform': 'translate3d(0, 0, 0)',
+                transform: 'translate3d(0, 0, 0)'
+              }, duration, ttf, callback);
+            }, 0);
+          }
+        } else {
+          callback();
+        }
+        return res;
       }
-      return res;
     },
     fadeOut: function(modInst, contentDom, backToParent, animateType, cb) {
-      var callback, duration, ref, ref1, ref2, res, sd, ttf;
+      var callback, duration, percentage, ref, ref1, ref2, ref3, ref4, res, sd, ttf, zIndex;
       if (typeof _opt.onBeforeFadeOut === "function") {
         _opt.onBeforeFadeOut(modInst);
       }
-      res = '';
-      animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
-      ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
-      duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
-      callback = function() {
-        if (contentDom.data('sb-mod') !== _currentModName) {
-          contentDom.hide();
-        }
-        return typeof cb === "function" ? cb() : void 0;
-      };
-      if (animateType === 'fade') {
-        contentDom.css({
-          opacity: '1'
-        });
-        setTimeout(function() {
-          return contentDom.animate({
-            opacity: '0'
-          }, duration, ttf, function() {
-            contentDom.hide();
-            return typeof callback === "function" ? callback() : void 0;
-          });
-        }, 0);
-      } else if (animateType === 'slide') {
-        sd = $('[data-slide-direction]', contentDom).data('slide-direction');
-        if (sd === 'vu' || sd === 'vd') {
-          res = 'fade';
-        }
-        $('.sb-mod').css({
-          zIndex: '0'
-        });
-        if (_opt.transformAnimation === false) {
-          contentDom.css({
-            zIndex: '2',
-            left: '0',
-            top: '0'
-          });
-          setTimeout(function() {
-            if (sd === 'vu' || sd === 'vd') {
-              return contentDom.animate({
-                top: (sd === 'vd' ? '-' : '') + '100%'
-              }, duration, ttf, callback);
-            } else {
-              return contentDom.animate({
-                left: (backToParent ? '' : '-') + '100%'
-              }, duration, ttf, callback);
-            }
-          }, 0);
-        } else {
-          contentDom.css({
-            zIndex: '2',
-            '-webkit-transform': 'translate3d(0, 0, 0)',
-            transform: 'translate3d(0, 0, 0)'
-          });
-          setTimeout(function() {
-            if (sd === 'vu' || sd === 'vd') {
-              return contentDom.animate({
-                '-webkit-transform': 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)',
-                transform: 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)'
-              }, duration, ttf, callback);
-            } else {
-              return contentDom.animate({
-                '-webkit-transform': 'translate3d(' + (backToParent ? '' : '-') + '100%, 0, 0)',
-                transform: 'translate3d(' + (backToParent ? '' : '-') + '100%, 0, 0)'
-              }, duration, ttf, callback);
-            }
-          }, 0);
-        }
+      if (_opt.fadeOut) {
+        return _opt.fadeOut(modInst, contentDom, backToParent, animateType, cb);
       } else {
-        callback();
+        res = '';
+        animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
+        ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
+        duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
+        callback = function() {
+          if (contentDom.data('sb-mod') !== _currentModName) {
+            contentDom.hide();
+          }
+          return typeof cb === "function" ? cb() : void 0;
+        };
+        if (animateType === 'fade') {
+          contentDom.css({
+            opacity: '1'
+          });
+          setTimeout(function() {
+            return contentDom.animate({
+              opacity: '0'
+            }, duration, ttf, function() {
+              contentDom.hide();
+              return typeof callback === "function" ? callback() : void 0;
+            });
+          }, 0);
+        } else if (animateType === 'slide') {
+          sd = $('[data-slide-direction]', contentDom).data('slide-direction');
+          zIndex = '1';
+          percentage = '100';
+          if (((ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0) >= -100) {
+            percentage = parseInt((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0);
+          }
+          if (sd === 'vu' || sd === 'vd') {
+            res = 'fade';
+            zIndex = '3';
+          }
+          $('.sb-mod').css({
+            zIndex: '0'
+          });
+          if (_opt.transformAnimation === false) {
+            contentDom.css({
+              zIndex: zIndex,
+              left: '0',
+              top: '0'
+            });
+            setTimeout(function() {
+              if (sd === 'vu' || sd === 'vd') {
+                return contentDom.animate({
+                  top: (sd === 'vd' ? -100 : 100) + '%'
+                }, duration, ttf, callback);
+              } else {
+                return contentDom.animate({
+                  left: (backToParent ? percentage : -percentage) + '%'
+                }, duration, ttf, callback);
+              }
+            }, 0);
+          } else {
+            contentDom.css({
+              zIndex: zIndex,
+              '-webkit-transform': 'translate3d(0, 0, 0)',
+              transform: 'translate3d(0, 0, 0)'
+            });
+            setTimeout(function() {
+              if (sd === 'vu' || sd === 'vd') {
+                return contentDom.animate({
+                  '-webkit-transform': 'translate3d(0, ' + (sd === 'vd' ? -100 : 100) + '%, 0)',
+                  transform: 'translate3d(0, ' + (sd === 'vd' ? -100 : 100) + '%, 0)'
+                }, duration, ttf, callback);
+              } else {
+                return contentDom.animate({
+                  '-webkit-transform': 'translate3d(' + (backToParent ? percentage : -percentage) + '%, 0, 0)',
+                  transform: 'translate3d(' + (backToParent ? percentage : -percentage) + '%, 0, 0)'
+                }, duration, ttf, callback);
+              }
+            }, 0);
+          }
+        } else {
+          callback();
+        }
+        return res;
       }
-      return res;
     },
     view: function(mark, opt) {
       var args, contentDom, extArgs, modInst, modName, pModInst, pModName, tmp;
@@ -349,6 +363,11 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         tmp = mark.split('/args...');
         args = tmp[1] && tmp[1].split('.') || [];
       }
+      $.each(extArgs, function(i, arg) {
+        if (arg) {
+          return args[i] = arg;
+        }
+      });
       pModName = _currentModName;
       pModInst = _modCache[pModName];
       if (mark.indexOf(_opt.modPrefix + '/') === 0) {
@@ -363,7 +382,9 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         fromModName: pModName,
         toModName: modName,
         fromMark: _currentMark,
-        toMark: mark
+        toMark: mark,
+        args: args,
+        opt: opt.modOpt
       };
       if ((typeof _opt.onBeforeViewChange === "function" ? _opt.onBeforeViewChange(modName, modInst) : void 0) === false) {
         return;
@@ -380,11 +401,6 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       _previousModName = _currentModName;
       _currentMark = mark;
       _currentModName = modName;
-      $.each(extArgs, function(i, arg) {
-        if (arg) {
-          return args[i] = arg;
-        }
-      });
       if (modInst && modInst.isRenderred() && modName !== 'alert' && modName === pModName) {
         modInst.update(args, opt.modOpt);
         _onAfterViewChange(modName, modInst);
@@ -395,6 +411,9 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         _onAfterViewChange(modName, modInst);
         core.trigger('afterViewChange', modInst);
       } else {
+        if (modInst != null) {
+          modInst.destroy();
+        }
         _viewChangeInfo.loadFromModCache = false;
         core.removeCache(modName);
         $('[data-sb-mod="' + modName + '"]', _container).remove();

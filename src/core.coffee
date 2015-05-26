@@ -111,126 +111,136 @@ core = $.extend $({}),
 
 	fadeIn: (modInst, contentDom, backToParent, animateType, cb) ->
 		_opt.onBeforeFadeIn? modInst
-		res = ''
-		animateType = animateType || _opt.animate?.type
-		ttf = _opt.animate?.timingFunction || 'linear'
-		duration = _opt.animate?.duration || 300
-		callback = ->
-			if animateType is 'slide'
-				$('.sb-mod').css
-					zIndex: '0'
-				contentDom.css
-					zIndex: '1'
-			cb?()
-		contentDom.show()
-		if animateType is 'fade' or animateType is 'fadeIn'
-			contentDom.css
-				opacity: '0'
-			contentDom.show()
-			setTimeout ->
-				contentDom.animate
-					opacity: '1'
-				, duration, ttf, callback
-			, 0
-		else if animateType is 'slide'
-			sd = $('[data-slide-direction]', contentDom).data 'slide-direction'
-			if _opt.transformAnimation is false
-				if sd in ['vu', 'vd']
-					contentDom.css
-						zIndex: '1'
-						top: (if sd is 'vd' then '-' else '') + '100%'
-				else
-					contentDom.css
-						zIndex: '1'
-						left: (if backToParent then '-' else '') + '100%'
-				setTimeout ->
-					contentDom.animate
-						'-webkit-transform': 'translate3d(0, 0, 0)'
-						left: '0'
-						top: '0'
-					, duration, ttf, callback
-				, 0
-			else
-				if sd in ['vu', 'vd']
-					contentDom.css
-						zIndex: '1'
-						'-webkit-transform': 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
-						transform: 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
-				else
-					contentDom.css
-						zIndex: '1'
-						'-webkit-transform': 'translate3d(' + (if backToParent then '-' else '') + '100%, 0, 0)'
-						transform: 'translate3d(' + (if backToParent then '-' else '') + '100%, 0, 0)'
-				setTimeout ->
-					contentDom.animate
-						'-webkit-transform': 'translate3d(0, 0, 0)'
-						transform: 'translate3d(0, 0, 0)'
-					, duration, ttf, callback
-				, 0
+		if _opt.fadeIn
+			_opt.fadeIn modInst, contentDom, backToParent, animateType, cb
 		else
-			callback()
-		res
+			res = ''
+			animateType = animateType || _opt.animate?.type
+			ttf = _opt.animate?.timingFunction || 'linear'
+			duration = _opt.animate?.duration || 300
+			callback = ->
+				if animateType is 'slide'
+					$('.sb-mod').css
+						zIndex: '0'
+					contentDom.css
+						zIndex: '2'
+				cb?()
+			contentDom.show()
+			if animateType in ['fade', 'fadeIn']
+				contentDom.css
+					opacity: '0'
+				contentDom.show()
+				setTimeout ->
+					contentDom.animate
+						opacity: '1'
+					, duration, ttf, callback
+				, 0
+			else if animateType is 'slide'
+				sd = $('[data-slide-direction]', contentDom).data 'slide-direction'
+				if _opt.transformAnimation is false
+					if sd in ['vu', 'vd']
+						contentDom.css
+							zIndex: '2'
+							top: (if sd is 'vd' then '-' else '') + '100%'
+					else
+						contentDom.css
+							zIndex: '2'
+							left: (if backToParent then '-' else '') + '100%'
+					setTimeout ->
+						contentDom.animate
+							left: '0'
+							top: '0'
+						, duration, ttf, callback
+					, 0
+				else
+					if sd in ['vu', 'vd']
+						contentDom.css
+							zIndex: '2'
+							'-webkit-transform': 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
+							transform: 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
+					else
+						contentDom.css
+							zIndex: '2'
+							'-webkit-transform': 'translate3d(' + (if backToParent then '-' else '') + '100%, 0, 0)'
+							transform: 'translate3d(' + (if backToParent then '-' else '') + '100%, 0, 0)'
+					setTimeout ->
+						contentDom.animate
+							'-webkit-transform': 'translate3d(0, 0, 0)'
+							transform: 'translate3d(0, 0, 0)'
+						, duration, ttf, callback
+					, 0
+			else
+				callback()
+			res
 
 	fadeOut: (modInst, contentDom, backToParent, animateType, cb) ->
 		_opt.onBeforeFadeOut? modInst
-		res = ''
-		animateType = animateType || _opt.animate?.type
-		ttf = _opt.animate?.timingFunction || 'linear'
-		duration = _opt.animate?.duration || 300
-		callback = ->
-			contentDom.hide() if contentDom.data('sb-mod') isnt _currentModName
-			cb?()
-		if animateType is 'fade'
-			contentDom.css
-				opacity: '1'
-			setTimeout ->
-				contentDom.animate
-					opacity: '0'
-				, duration, ttf, ->
-					contentDom.hide()
-					callback?()
-			, 0
-		else if animateType is 'slide'
-			sd = $('[data-slide-direction]', contentDom).data 'slide-direction'
-			if sd in ['vu', 'vd']
-				res = 'fade'
-			$('.sb-mod').css
-				zIndex: '0'
-			if _opt.transformAnimation is false
-				contentDom.css
-					zIndex: '2'
-					left: '0'
-					top: '0'
-				setTimeout ->
-					if sd in ['vu', 'vd']
-						contentDom.animate
-							top: (if sd is 'vd' then '-' else '') + '100%'
-						, duration, ttf, callback
-					else
-						contentDom.animate
-							left: (if backToParent then '' else '-') + '100%'
-						, duration, ttf, callback
-				, 0
-			else
-				contentDom.css
-					zIndex: '2'
-					'-webkit-transform': 'translate3d(0, 0, 0)'
-					transform: 'translate3d(0, 0, 0)'
-				setTimeout ->
-					if sd in ['vu', 'vd']
-						contentDom.animate
-							'-webkit-transform': 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
-							transform: 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
-						, duration, ttf, callback
-					else
-						contentDom.animate
-							'-webkit-transform': 'translate3d(' + (if backToParent then '' else '-') + '100%, 0, 0)'
-							transform: 'translate3d(' + (if backToParent then '' else '-') + '100%, 0, 0)'
-						, duration, ttf, callback
-				, 0
+		if _opt.fadeOut
+			_opt.fadeOut modInst, contentDom, backToParent, animateType, cb
 		else
-			callback()
-		res
+			res = ''
+			animateType = animateType || _opt.animate?.type
+			ttf = _opt.animate?.timingFunction || 'linear'
+			duration = _opt.animate?.duration || 300
+			callback = ->
+				contentDom.hide() if contentDom.data('sb-mod') isnt _currentModName
+				cb?()
+			if animateType is 'fade'
+				contentDom.css
+					opacity: '1'
+				setTimeout ->
+					contentDom.animate
+						opacity: '0'
+					, duration, ttf, ->
+						contentDom.hide()
+						callback?()
+				, 0
+			else if animateType is 'slide'
+				sd = $('[data-slide-direction]', contentDom).data 'slide-direction'
+				zIndex = '1'
+				percentage = '100'
+				if _opt.animate?.slideOutPercent >= -100
+					percentage = parseInt _opt.animate?.slideOutPercent
+				if sd in ['vu', 'vd']
+					res = 'fade'
+					zIndex = '3'
+				$('.sb-mod').css
+					zIndex: '0'
+				if _opt.transformAnimation is false
+					contentDom.css
+						zIndex: zIndex
+						left: '0'
+						top: '0'
+					setTimeout ->
+						if sd in ['vu', 'vd']
+							contentDom.animate
+								top: (if sd is 'vd' then -100 else 100) + '%'
+							, duration, ttf, callback
+						else
+							contentDom.animate
+								left: (if backToParent then percentage else -percentage) + '%'
+							, duration, ttf, callback
+					, 0
+				else
+					contentDom.css
+						zIndex: zIndex
+						'-webkit-transform': 'translate3d(0, 0, 0)'
+						transform: 'translate3d(0, 0, 0)'
+					setTimeout ->
+						if sd in ['vu', 'vd']
+							contentDom.animate
+								'-webkit-transform': 'translate3d(0, ' + (if sd is 'vd' then -100 else 100) + '%, 0)'
+								transform: 'translate3d(0, ' + (if sd is 'vd' then -100 else 100) + '%, 0)'
+							, duration, ttf, callback
+						else
+							contentDom.animate
+								'-webkit-transform': 'translate3d(' + (if backToParent then percentage else -percentage) + '%, 0, 0)'
+								transform: 'translate3d(' + (if backToParent then percentage else -percentage) + '%, 0, 0)'
+							, duration, ttf, callback
+					, 0
+			else
+				callback()
+			res
 
 	view: (mark, opt) ->
 		mark = mark.replace /^\/+/, ''
