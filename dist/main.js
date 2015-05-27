@@ -7,7 +7,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
   BaseMod = require('./base-mod');
 
   module.exports = {
-    version: '0.1.24',
+    version: '0.1.26',
     core: core,
     BaseMod: BaseMod
   };
@@ -18,7 +18,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
 
 define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], function(require, exports, module) {
 (function() {
-  var $, _constructContentDom, _container, _currentMark, _currentModName, _init, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _scrollTop, _switchNavTab, _viewChangeInfo, ajaxHistory, core;
+  var $, _constructContentDom, _container, _currentMark, _currentModName, _init, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _scrollTop, _switchNavTab, _viewChangeInfo, _viewId, ajaxHistory, core;
 
   $ = require('jquery');
 
@@ -41,6 +41,10 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
   _opt = {};
 
   _container = $(document.body);
+
+  _viewId = 0;
+
+  _loadId = 0;
 
   _switchNavTab = function(modInst) {
     var tabName;
@@ -339,7 +343,9 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       }
     },
     view: function(mark, opt) {
-      var args, contentDom, extArgs, modInst, modName, pModInst, pModName, tmp;
+      var args, contentDom, extArgs, loadMod, modInst, modName, pModInst, pModName, tmp, viewId;
+      _viewId++;
+      viewId = _viewId;
       mark = mark.replace(/^\/+/, '');
       opt = opt || {};
       extArgs = opt.args || [];
@@ -405,34 +411,22 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         modInst.update(args, opt.modOpt);
         _onAfterViewChange(modName, modInst);
         core.trigger('afterViewChange', modInst);
-      } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (_viewChangeInfo.from === 'history' || _opt.alwaysUseCache || modInst.alwaysUseCache) && modInst.getArgs().join('/') === args.join('/')) {
+      } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (!modInst.viewed || _viewChangeInfo.from === 'history' || _opt.alwaysUseCache || modInst.alwaysUseCache) && modInst.getArgs().join('/') === args.join('/')) {
         modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0);
         _switchNavTab(modInst);
         _onAfterViewChange(modName, modInst);
         core.trigger('afterViewChange', modInst);
       } else {
+        _viewChangeInfo.loadFromModCache = false;
+        core.removeCache(modName);
         if (modInst != null) {
           modInst.destroy();
         }
-        _viewChangeInfo.loadFromModCache = false;
-        core.removeCache(modName);
         $('[data-sb-mod="' + modName + '"]', _container).remove();
-        if (_opt.initContentDom && modName === _opt.defaultModName) {
-          contentDom = $(_opt.initContentDom);
-          contentDom.attr('data-mod-name', modName);
-          _opt.initContentDom = null;
-        } else {
-          if (_opt.initContentDom) {
-            $(_opt.initContentDom).remove();
-            _opt.initContentDom = null;
-          }
-          contentDom = _constructContentDom(modName, args, opt.modOpt);
-          core.fadeIn(null, contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, pModInst != null ? pModInst.fadeOut(modName) : void 0);
-        }
-        (function(modName, contentDom, args, pModName) {
+        loadMod = function(modName, contentDom, args) {
           return require([_opt.modBase + 'mod/' + modName + '/main'], function(ModClass) {
             var e;
-            if (modName === _currentModName && !_modCache[modName]) {
+            if (viewId === _viewId && !_modCache[modName]) {
               try {
                 return modInst = _modCache[modName] = new ModClass(modName, contentDom, args, opt.modOpt);
               } catch (_error) {
@@ -459,7 +453,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
           }, function() {
             if (modName !== 'alert') {
               contentDom.remove();
-              if (modName === _currentModName) {
+              if (viewId === _viewId) {
                 return core.showAlert({
                   type: 'error',
                   subType: 'load_mod_fail',
@@ -473,12 +467,106 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
               return alert('Failed to load module "' + (opt.failLoadModName || modName) + '"');
             }
           });
-        })(modName, contentDom, args, pModName);
+        };
+        if (_opt.initContentDom && modName === _opt.defaultModName) {
+          contentDom = $(_opt.initContentDom);
+          contentDom.attr('data-mod-name', modName);
+          _opt.initContentDom = null;
+          loadMod(modName, contentDom, args);
+        } else {
+          if (_opt.initContentDom) {
+            $(_opt.initContentDom).remove();
+            _opt.initContentDom = null;
+          }
+          contentDom = _constructContentDom(modName, args, opt.modOpt);
+          core.fadeIn(null, contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, pModInst != null ? pModInst.fadeOut(modName) : void 0, function() {
+            return loadMod(modName, contentDom, args);
+          });
+        }
       }
       if (!opt.holdMark) {
         return ajaxHistory.setMark(mark, {
           replaceState: opt.replaceState
         });
+      }
+    },
+    load: function(mark, opt, onLoad) {
+      var args, contentDom, extArgs, loadId, loadMod, modInst, modName, tmp, viewId;
+      _loadId++;
+      viewId = _viewId;
+      loadId = _loadId;
+      mark = mark.replace(/^\/+/, '');
+      opt = opt || {};
+      extArgs = opt.args || [];
+      if (mark.indexOf('/-/') > 0) {
+        tmp = mark.split('/-/');
+        args = tmp[1] && tmp[1].split('/') || [];
+      } else {
+        tmp = mark.split('/args...');
+        args = tmp[1] && tmp[1].split('.') || [];
+      }
+      $.each(extArgs, function(i, arg) {
+        if (arg) {
+          return args[i] = arg;
+        }
+      });
+      if (mark.indexOf(_opt.modPrefix + '/') === 0) {
+        modName = tmp[0].replace(_opt.modPrefix, '').replace(/^\/+|\/+$/g, '');
+      }
+      modName = modName || _opt.defaultModName;
+      modInst = _modCache[modName];
+      if (modName === _currentModName || modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (_opt.alwaysUseCache || modInst.alwaysUseCache) && modInst.getArgs().join('/') === args.join('/')) {
+        return onLoad();
+      } else {
+        core.removeCache(modName);
+        if (modInst != null) {
+          modInst.destroy();
+        }
+        $('[data-sb-mod="' + modName + '"]', _container).remove();
+        loadMod = function(modName, contentDom, args) {
+          return require([_opt.modBase + 'mod/' + modName + '/main'], function(ModClass) {
+            var e;
+            if (viewId === _viewId && loadId === _loadId && !_modCache[modName]) {
+              try {
+                return modInst = _modCache[modName] = new ModClass(modName, contentDom, args, opt.modOpt, function() {
+                  if (viewId === _viewId && loadId === _loadId) {
+                    return onLoad();
+                  } else {
+                    return contentDom.remove();
+                  }
+                });
+              } catch (_error) {
+                e = _error;
+                contentDom.remove();
+                if (typeof console !== "undefined" && console !== null) {
+                  if (typeof console.error === "function") {
+                    console.error(e.stack);
+                  }
+                }
+                throw e;
+              }
+            } else {
+              return contentDom.remove();
+            }
+          }, function() {
+            if (modName !== 'alert') {
+              contentDom.remove();
+              if (viewId === _viewId && loadId === _loadId) {
+                return core.showAlert({
+                  type: 'error',
+                  subType: 'load_mod_fail',
+                  failLoadModName: modName
+                }, {
+                  failLoadModName: modName
+                });
+              }
+            } else {
+              return alert('Failed to load module "' + (opt.failLoadModName || modName) + '"');
+            }
+          });
+        };
+        contentDom = _constructContentDom(modName, args, opt.modOpt);
+        return loadMod(modName, contentDom, args);
       }
     },
     getViewChangeInfo: function() {
@@ -659,7 +747,9 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
   core = require('./core');
 
   BaseMod = (function() {
-    function BaseMod(modName, contentDom, args, opt) {
+    var viewed;
+
+    function BaseMod(modName, contentDom, args, opt, onFirstRender) {
       this._modName = modName;
       if (!contentDom) {
         return this;
@@ -668,9 +758,12 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
       this._bindEvents();
       this._args = args || [];
       this._opt = opt || {};
+      this._onFirstRender = onFirstRender;
       this.init();
       this.render();
     }
+
+    viewed = false;
 
     BaseMod.prototype.showNavTab = false;
 
@@ -740,7 +833,9 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
       }
     };
 
-    BaseMod.prototype._afterFadeIn = function(relModInst) {};
+    BaseMod.prototype._afterFadeIn = function(relModInst) {
+      return this.viewed = true;
+    };
 
     BaseMod.prototype._afterFadeOut = function(relModName) {
       return this._ifNotCachable(relModName, (function(_this) {
@@ -787,6 +882,13 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
       }
     };
 
+    BaseMod.prototype._onRender = function() {
+      if (typeof this._onFirstRender === "function") {
+        this._onFirstRender();
+      }
+      return this._onFirstRender = null;
+    };
+
     BaseMod.prototype.render = function() {
       if (this._headerTpl) {
         this._renderHeader({
@@ -801,11 +903,12 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
         });
       }
       if (this._fixedFooterTpl) {
-        return this._renderFixedFooter({
+        this._renderFixedFooter({
           args: this._args,
           opt: this._opt
         });
       }
+      return this._onRender();
     };
 
     BaseMod.prototype.init = function() {};

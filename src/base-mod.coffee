@@ -2,7 +2,7 @@ $ = require 'jquery'
 core = require './core'
 
 class BaseMod
-	constructor: (modName, contentDom, args, opt) ->
+	constructor: (modName, contentDom, args, opt, onFirstRender) ->
 		@_modName = modName
 		if not contentDom
 			return @
@@ -10,9 +10,11 @@ class BaseMod
 		@_bindEvents()
 		@_args = args || []
 		@_opt = opt || {}
+		@_onFirstRender = onFirstRender
 		@init()
 		@render()
 
+	viewed = false
 	showNavTab: false
 	navTab: ''
 	events: {}
@@ -57,6 +59,7 @@ class BaseMod
 						elseCallback?()
 
 	_afterFadeIn: (relModInst) ->
+		@viewed = true
 
 	_afterFadeOut: (relModName) ->
 		@_ifNotCachable relModName, =>
@@ -95,6 +98,10 @@ class BaseMod
 			].join ''
 			$('> .sb-mod__fixed-footer', @_contentDom).hide()
 
+	_onRender: ->
+		@_onFirstRender?()
+		@_onFirstRender = null
+
 	render: ->
 		if @_headerTpl
 			@_renderHeader
@@ -108,6 +115,7 @@ class BaseMod
 			@_renderFixedFooter
 				args: @_args
 				opt: @_opt
+		@_onRender()
 
 	init: ->
 

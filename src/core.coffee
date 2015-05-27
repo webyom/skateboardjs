@@ -10,6 +10,8 @@ _scrollTop = 0
 _viewChangeInfo = null
 _opt = {}
 _container = $(document.body)
+_viewId = 0
+_loadId = 0
 
 _switchNavTab = (modInst) ->
 	if _opt.switchNavTab
@@ -243,6 +245,8 @@ core = $.extend $({}),
 			res
 
 	view: (mark, opt) ->
+		_viewId++
+		viewId = _viewId
 		mark = mark.replace /^\/+/, ''
 		opt = opt || {}
 		extArgs = opt.args || []
@@ -303,30 +307,20 @@ core = $.extend $({}),
 		and modInst.isRenderred() \
 		and modName isnt 'alert' \
 		and not opt.modOpt \
-		and (_viewChangeInfo.from is 'history' or _opt.alwaysUseCache or modInst.alwaysUseCache) \
+		and (not modInst.viewed or _viewChangeInfo.from is 'history' or _opt.alwaysUseCache or modInst.alwaysUseCache) \
 		and modInst.getArgs().join('/') is args.join('/')
 			modInst.fadeIn pModInst, pModInst?.fadeOut(modName)
 			_switchNavTab modInst
 			_onAfterViewChange modName, modInst
 			core.trigger 'afterViewChange', modInst
 		else
-			modInst?.destroy()
 			_viewChangeInfo.loadFromModCache = false
 			core.removeCache modName
+			modInst?.destroy()
 			$('[data-sb-mod="' + modName + '"]', _container).remove()
-			if _opt.initContentDom and modName is _opt.defaultModName
-				contentDom = $(_opt.initContentDom)
-				contentDom.attr 'data-mod-name', modName
-				_opt.initContentDom = null
-			else
-				if _opt.initContentDom
-					$(_opt.initContentDom).remove()
-					_opt.initContentDom = null
-				contentDom = _constructContentDom(modName, args, opt.modOpt)
-				core.fadeIn null, contentDom, pModInst?.hasParent(modName), pModInst?.fadeOut(modName)
-			((modName, contentDom, args, pModName) ->
+			loadMod = (modName, contentDom, args) ->
 				require [_opt.modBase + 'mod/' + modName + '/main'], (ModClass) ->
-					if modName is _currentModName and not _modCache[modName]
+					if viewId is _viewId and not _modCache[modName]
 						try
 							modInst = _modCache[modName] = new ModClass modName, contentDom, args, opt.modOpt
 						catch e
@@ -345,11 +339,78 @@ core = $.extend $({}),
 				, ->
 					if modName isnt 'alert'
 						contentDom.remove()
-						core.showAlert({type: 'error', subType: 'load_mod_fail', failLoadModName: modName}, {failLoadModName: modName, holdMark: true}) if modName is _currentModName
+						core.showAlert({type: 'error', subType: 'load_mod_fail', failLoadModName: modName}, {failLoadModName: modName, holdMark: true}) if viewId is _viewId
 					else
 						alert 'Failed to load module "' + (opt.failLoadModName || modName) + '"'
-			)(modName, contentDom, args, pModName)
+			if _opt.initContentDom and modName is _opt.defaultModName
+				contentDom = $(_opt.initContentDom)
+				contentDom.attr 'data-mod-name', modName
+				_opt.initContentDom = null
+				loadMod modName, contentDom, args
+			else
+				if _opt.initContentDom
+					$(_opt.initContentDom).remove()
+					_opt.initContentDom = null
+				contentDom = _constructContentDom(modName, args, opt.modOpt)
+				core.fadeIn null, contentDom, pModInst?.hasParent(modName), pModInst?.fadeOut(modName), ->
+					loadMod modName, contentDom, args
 		ajaxHistory.setMark(mark, replaceState: opt.replaceState) if not opt.holdMark
+
+	load: (mark, opt, onLoad) ->
+		_loadId++
+		viewId = _viewId
+		loadId = _loadId
+		mark = mark.replace /^\/+/, ''
+		opt = opt || {}
+		extArgs = opt.args || []
+		if mark.indexOf('/-/') > 0
+			tmp = mark.split '/-/'
+			args = tmp[1] && tmp[1].split('/') || []
+		else
+			tmp = mark.split '/args...'
+			args = tmp[1] && tmp[1].split('.') || []
+		$.each extArgs, (i, arg) ->
+			if arg
+				args[i] = arg
+		if mark.indexOf(_opt.modPrefix + '/') is 0
+			modName = tmp[0].replace(_opt.modPrefix, '').replace(/^\/+|\/+$/g, '')
+		modName = modName || _opt.defaultModName
+		modInst = _modCache[modName]
+		if modName is _currentModName \
+		or modInst \
+		and modInst.isRenderred() \
+		and modName isnt 'alert' \
+		and not opt.modOpt \
+		and (_opt.alwaysUseCache or modInst.alwaysUseCache) \
+		and modInst.getArgs().join('/') is args.join('/')
+			onLoad()
+		else
+			core.removeCache modName
+			modInst?.destroy()
+			$('[data-sb-mod="' + modName + '"]', _container).remove()
+			loadMod = (modName, contentDom, args) ->
+				require [_opt.modBase + 'mod/' + modName + '/main'], (ModClass) ->
+					if viewId is _viewId and loadId is _loadId and not _modCache[modName]
+						try
+							modInst = _modCache[modName] = new ModClass modName, contentDom, args, opt.modOpt, ->
+								if viewId is _viewId and loadId is _loadId
+									onLoad()
+								else
+									contentDom.remove()
+						catch e
+							contentDom.remove()
+							console?.error? e.stack
+							throw e
+					else
+						contentDom.remove()
+				, ->
+					if modName isnt 'alert'
+						contentDom.remove()
+						core.showAlert({type: 'error', subType: 'load_mod_fail', failLoadModName: modName}, {failLoadModName: modName}) if viewId is _viewId and loadId is _loadId
+					else
+						alert 'Failed to load module "' + (opt.failLoadModName || modName) + '"'
+			contentDom = _constructContentDom(modName, args, opt.modOpt)
+			loadMod modName, contentDom, args
 
 	getViewChangeInfo: ->
 		_viewChangeInfo
