@@ -286,6 +286,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
             });
           }
         } else {
+          contentDom.show();
           callback();
         }
         return res;

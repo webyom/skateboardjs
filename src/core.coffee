@@ -198,6 +198,7 @@ core = $.extend $({}),
 							top: '0'
 						, duration, ttf, callback
 			else
+				contentDom.show()
 				callback()
 			res
 
