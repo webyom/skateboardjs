@@ -2,6 +2,6 @@ core = require './core'
 BaseMod = require './base-mod'
 
 module.exports =
-	version: '0.1.26'
+	version: '0.2.0'
 	core: core
 	BaseMod: BaseMod

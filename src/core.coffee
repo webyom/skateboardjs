@@ -13,6 +13,20 @@ _container = $(document.body)
 _viewId = 0
 _loadId = 0
 
+_cssProps = (->
+	el = document.createElement 'div'
+	props =
+		webkitTransition: ['webkitTransitionEnd', '-webkit-transition', '-webkit-transform']
+		transition: ['transitionend', 'transition', 'transform']
+	for p of props
+		if el.style[p] isnt undefined
+			return props[p]
+	null
+)()
+
+_requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || (callback) ->
+	setTimeout callback, 16
+
 _switchNavTab = (modInst) ->
 	if _opt.switchNavTab
 		_opt.switchNavTab modInst
@@ -127,50 +141,62 @@ core = $.extend $({}),
 					contentDom.css
 						zIndex: '2'
 				cb?()
-			contentDom.show()
 			if animateType in ['fade', 'fadeIn']
-				contentDom.css
-					opacity: '0'
-				contentDom.show()
-				setTimeout ->
-					contentDom.animate
-						opacity: '1'
-					, duration, ttf, callback
-				, 0
+				if _cssProps
+					cssObj =
+						opacity: '0'
+					cssObj[_cssProps[1]] = 'none'
+					contentDom.css(cssObj).show()
+					contentDom[0].offsetTop
+					_requestAnimationFrame ->
+						cssObj = {}
+						cssObj[_cssProps[1]] = "opacity #{duration / 1000}s #{ttf}"
+						cssObj['opacity'] = '1'
+						contentDom.one _cssProps[0], callback
+						contentDom.css cssObj
+				else
+					contentDom.css
+						opacity: '0'
+					contentDom.show()
+					_requestAnimationFrame ->
+						contentDom.animate
+							opacity: '1'
+						, duration, ttf, callback
 			else if animateType is 'slide'
 				sd = $('[data-slide-direction]', contentDom).data 'slide-direction'
-				if _opt.transformAnimation is false
+				if _cssProps
+					cssObj =
+						zIndex: '2'
+					cssObj[_cssProps[1]] = 'none'
+					if sd in ['vu', 'vd']
+						cssObj[_cssProps[2]] = 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
+					else
+						cssObj[_cssProps[2]] = 'translate3d(' + (if backToParent then '-' else '') + '100%, 0, 0)'
+					contentDom.css(cssObj).show()
+					contentDom[0].offsetTop
+					_requestAnimationFrame ->
+						cssObj = {}
+						cssObj[_cssProps[1]] = "#{_cssProps[2]} #{duration / 1000}s #{ttf}"
+						cssObj[_cssProps[2]] = 'translate3d(0, 0, 0)'
+						contentDom.one _cssProps[0], callback
+						contentDom.css cssObj
+				else
 					if sd in ['vu', 'vd']
 						contentDom.css
 							zIndex: '2'
+							left: '0'
 							top: (if sd is 'vd' then '-' else '') + '100%'
 					else
 						contentDom.css
 							zIndex: '2'
 							left: (if backToParent then '-' else '') + '100%'
-					setTimeout ->
+							top: '0'
+					contentDom.show()
+					_requestAnimationFrame ->
 						contentDom.animate
 							left: '0'
 							top: '0'
 						, duration, ttf, callback
-					, 0
-				else
-					if sd in ['vu', 'vd']
-						contentDom.css
-							zIndex: '2'
-							'-webkit-transform': 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
-							transform: 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
-					else
-						contentDom.css
-							zIndex: '2'
-							'-webkit-transform': 'translate3d(' + (if backToParent then '-' else '') + '100%, 0, 0)'
-							transform: 'translate3d(' + (if backToParent then '-' else '') + '100%, 0, 0)'
-					setTimeout ->
-						contentDom.animate
-							'-webkit-transform': 'translate3d(0, 0, 0)'
-							transform: 'translate3d(0, 0, 0)'
-						, duration, ttf, callback
-					, 0
 			else
 				callback()
 			res
@@ -188,15 +214,20 @@ core = $.extend $({}),
 				contentDom.hide() if contentDom.data('sb-mod') isnt _currentModName
 				cb?()
 			if animateType is 'fade'
-				contentDom.css
-					opacity: '1'
-				setTimeout ->
-					contentDom.animate
-						opacity: '0'
-					, duration, ttf, ->
-						contentDom.hide()
-						callback?()
-				, 0
+				if _cssProps
+					_requestAnimationFrame ->
+						cssObj = {}
+						cssObj[_cssProps[1]] = "opacity #{duration / 1000}s #{ttf}"
+						cssObj['opacity'] = '0'
+						contentDom.one _cssProps[0], callback
+						contentDom.css cssObj
+				else
+					_requestAnimationFrame ->
+						contentDom.animate
+							opacity: '0'
+						, duration, ttf, ->
+							contentDom.hide()
+							callback?()
 			else if animateType is 'slide'
 				sd = $('[data-slide-direction]', contentDom).data 'slide-direction'
 				zIndex = '1'
@@ -206,14 +237,23 @@ core = $.extend $({}),
 				if sd in ['vu', 'vd']
 					res = 'fade'
 					zIndex = '3'
-				$('.sb-mod').css
-					zIndex: '0'
-				if _opt.transformAnimation is false
+				if _cssProps
+					_requestAnimationFrame ->
+						cssObj =
+							zIndex: zIndex
+						cssObj[_cssProps[1]] = "#{_cssProps[2]} #{duration / 1000}s #{ttf}"
+						if sd in ['vu', 'vd']
+							cssObj[_cssProps[2]] = 'translate3d(0, ' + (if sd is 'vd' then -100 else 100) + '%, 0)'
+						else
+							cssObj[_cssProps[2]] = 'translate3d(' + (if backToParent then percentage else -percentage) + '%, 0, 0)'
+						contentDom.one _cssProps[0], callback
+						contentDom.css cssObj
+				else
 					contentDom.css
 						zIndex: zIndex
 						left: '0'
 						top: '0'
-					setTimeout ->
+					_requestAnimationFrame ->
 						if sd in ['vu', 'vd']
 							contentDom.animate
 								top: (if sd is 'vd' then -100 else 100) + '%'
@@ -222,24 +262,6 @@ core = $.extend $({}),
 							contentDom.animate
 								left: (if backToParent then percentage else -percentage) + '%'
 							, duration, ttf, callback
-					, 0
-				else
-					contentDom.css
-						zIndex: zIndex
-						'-webkit-transform': 'translate3d(0, 0, 0)'
-						transform: 'translate3d(0, 0, 0)'
-					setTimeout ->
-						if sd in ['vu', 'vd']
-							contentDom.animate
-								'-webkit-transform': 'translate3d(0, ' + (if sd is 'vd' then -100 else 100) + '%, 0)'
-								transform: 'translate3d(0, ' + (if sd is 'vd' then -100 else 100) + '%, 0)'
-							, duration, ttf, callback
-						else
-							contentDom.animate
-								'-webkit-transform': 'translate3d(' + (if backToParent then percentage else -percentage) + '%, 0, 0)'
-								transform: 'translate3d(' + (if backToParent then percentage else -percentage) + '%, 0, 0)'
-							, duration, ttf, callback
-					, 0
 			else
 				callback()
 			res

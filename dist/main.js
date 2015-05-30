@@ -7,7 +7,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
   BaseMod = require('./base-mod');
 
   module.exports = {
-    version: '0.1.26',
+    version: '0.2.0',
     core: core,
     BaseMod: BaseMod
   };
@@ -18,7 +18,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
 
 define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], function(require, exports, module) {
 (function() {
-  var $, _constructContentDom, _container, _currentMark, _currentModName, _init, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _scrollTop, _switchNavTab, _viewChangeInfo, _viewId, ajaxHistory, core;
+  var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _init, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _scrollTop, _switchNavTab, _viewChangeInfo, _viewId, ajaxHistory, core;
 
   $ = require('jquery');
 
@@ -45,6 +45,25 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
   _viewId = 0;
 
   _loadId = 0;
+
+  _cssProps = (function() {
+    var el, p, props;
+    el = document.createElement('div');
+    props = {
+      webkitTransition: ['webkitTransitionEnd', '-webkit-transition', '-webkit-transform'],
+      transition: ['transitionend', 'transition', 'transform']
+    };
+    for (p in props) {
+      if (el.style[p] !== void 0) {
+        return props[p];
+      }
+    }
+    return null;
+  })();
+
+  _requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function(callback) {
+    return setTimeout(callback, 16);
+  };
 
   _switchNavTab = function(modInst) {
     var tabName;
@@ -175,7 +194,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       return _modCache[modName] = null;
     },
     fadeIn: function(modInst, contentDom, backToParent, animateType, cb) {
-      var callback, duration, ref, ref1, ref2, res, sd, ttf;
+      var callback, cssObj, duration, ref, ref1, ref2, res, sd, ttf;
       if (typeof _opt.onBeforeFadeIn === "function") {
         _opt.onBeforeFadeIn(modInst);
       }
@@ -197,57 +216,74 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
           }
           return typeof cb === "function" ? cb() : void 0;
         };
-        contentDom.show();
         if (animateType === 'fade' || animateType === 'fadeIn') {
-          contentDom.css({
-            opacity: '0'
-          });
-          contentDom.show();
-          setTimeout(function() {
-            return contentDom.animate({
-              opacity: '1'
-            }, duration, ttf, callback);
-          }, 0);
+          if (_cssProps) {
+            cssObj = {
+              opacity: '0'
+            };
+            cssObj[_cssProps[1]] = 'none';
+            contentDom.css(cssObj).show();
+            contentDom[0].offsetTop;
+            _requestAnimationFrame(function() {
+              cssObj = {};
+              cssObj[_cssProps[1]] = "opacity " + (duration / 1000) + "s " + ttf;
+              cssObj['opacity'] = '1';
+              contentDom.one(_cssProps[0], callback);
+              return contentDom.css(cssObj);
+            });
+          } else {
+            contentDom.css({
+              opacity: '0'
+            });
+            contentDom.show();
+            _requestAnimationFrame(function() {
+              return contentDom.animate({
+                opacity: '1'
+              }, duration, ttf, callback);
+            });
+          }
         } else if (animateType === 'slide') {
           sd = $('[data-slide-direction]', contentDom).data('slide-direction');
-          if (_opt.transformAnimation === false) {
+          if (_cssProps) {
+            cssObj = {
+              zIndex: '2'
+            };
+            cssObj[_cssProps[1]] = 'none';
+            if (sd === 'vu' || sd === 'vd') {
+              cssObj[_cssProps[2]] = 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)';
+            } else {
+              cssObj[_cssProps[2]] = 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)';
+            }
+            contentDom.css(cssObj).show();
+            contentDom[0].offsetTop;
+            _requestAnimationFrame(function() {
+              cssObj = {};
+              cssObj[_cssProps[1]] = _cssProps[2] + " " + (duration / 1000) + "s " + ttf;
+              cssObj[_cssProps[2]] = 'translate3d(0, 0, 0)';
+              contentDom.one(_cssProps[0], callback);
+              return contentDom.css(cssObj);
+            });
+          } else {
             if (sd === 'vu' || sd === 'vd') {
               contentDom.css({
                 zIndex: '2',
+                left: '0',
                 top: (sd === 'vd' ? '-' : '') + '100%'
               });
             } else {
               contentDom.css({
                 zIndex: '2',
-                left: (backToParent ? '-' : '') + '100%'
+                left: (backToParent ? '-' : '') + '100%',
+                top: '0'
               });
             }
-            setTimeout(function() {
+            contentDom.show();
+            _requestAnimationFrame(function() {
               return contentDom.animate({
                 left: '0',
                 top: '0'
               }, duration, ttf, callback);
-            }, 0);
-          } else {
-            if (sd === 'vu' || sd === 'vd') {
-              contentDom.css({
-                zIndex: '2',
-                '-webkit-transform': 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)',
-                transform: 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)'
-              });
-            } else {
-              contentDom.css({
-                zIndex: '2',
-                '-webkit-transform': 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)',
-                transform: 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)'
-              });
-            }
-            setTimeout(function() {
-              return contentDom.animate({
-                '-webkit-transform': 'translate3d(0, 0, 0)',
-                transform: 'translate3d(0, 0, 0)'
-              }, duration, ttf, callback);
-            }, 0);
+            });
           }
         } else {
           callback();
@@ -274,17 +310,25 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
           return typeof cb === "function" ? cb() : void 0;
         };
         if (animateType === 'fade') {
-          contentDom.css({
-            opacity: '1'
-          });
-          setTimeout(function() {
-            return contentDom.animate({
-              opacity: '0'
-            }, duration, ttf, function() {
-              contentDom.hide();
-              return typeof callback === "function" ? callback() : void 0;
+          if (_cssProps) {
+            _requestAnimationFrame(function() {
+              var cssObj;
+              cssObj = {};
+              cssObj[_cssProps[1]] = "opacity " + (duration / 1000) + "s " + ttf;
+              cssObj['opacity'] = '0';
+              contentDom.one(_cssProps[0], callback);
+              return contentDom.css(cssObj);
             });
-          }, 0);
+          } else {
+            _requestAnimationFrame(function() {
+              return contentDom.animate({
+                opacity: '0'
+              }, duration, ttf, function() {
+                contentDom.hide();
+                return typeof callback === "function" ? callback() : void 0;
+              });
+            });
+          }
         } else if (animateType === 'slide') {
           sd = $('[data-slide-direction]', contentDom).data('slide-direction');
           zIndex = '1';
@@ -296,16 +340,28 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
             res = 'fade';
             zIndex = '3';
           }
-          $('.sb-mod').css({
-            zIndex: '0'
-          });
-          if (_opt.transformAnimation === false) {
+          if (_cssProps) {
+            _requestAnimationFrame(function() {
+              var cssObj;
+              cssObj = {
+                zIndex: zIndex
+              };
+              cssObj[_cssProps[1]] = _cssProps[2] + " " + (duration / 1000) + "s " + ttf;
+              if (sd === 'vu' || sd === 'vd') {
+                cssObj[_cssProps[2]] = 'translate3d(0, ' + (sd === 'vd' ? -100 : 100) + '%, 0)';
+              } else {
+                cssObj[_cssProps[2]] = 'translate3d(' + (backToParent ? percentage : -percentage) + '%, 0, 0)';
+              }
+              contentDom.one(_cssProps[0], callback);
+              return contentDom.css(cssObj);
+            });
+          } else {
             contentDom.css({
               zIndex: zIndex,
               left: '0',
               top: '0'
             });
-            setTimeout(function() {
+            _requestAnimationFrame(function() {
               if (sd === 'vu' || sd === 'vd') {
                 return contentDom.animate({
                   top: (sd === 'vd' ? -100 : 100) + '%'
@@ -315,26 +371,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
                   left: (backToParent ? percentage : -percentage) + '%'
                 }, duration, ttf, callback);
               }
-            }, 0);
-          } else {
-            contentDom.css({
-              zIndex: zIndex,
-              '-webkit-transform': 'translate3d(0, 0, 0)',
-              transform: 'translate3d(0, 0, 0)'
             });
-            setTimeout(function() {
-              if (sd === 'vu' || sd === 'vd') {
-                return contentDom.animate({
-                  '-webkit-transform': 'translate3d(0, ' + (sd === 'vd' ? -100 : 100) + '%, 0)',
-                  transform: 'translate3d(0, ' + (sd === 'vd' ? -100 : 100) + '%, 0)'
-                }, duration, ttf, callback);
-              } else {
-                return contentDom.animate({
-                  '-webkit-transform': 'translate3d(' + (backToParent ? percentage : -percentage) + '%, 0, 0)',
-                  transform: 'translate3d(' + (backToParent ? percentage : -percentage) + '%, 0, 0)'
-                }, duration, ttf, callback);
-              }
-            }, 0);
           }
         } else {
           callback();

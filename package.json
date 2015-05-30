@@ -1,6 +1,6 @@
 {
   "name": "skateboard",
-  "version": "0.1.26",
+  "version": "0.2.0",
   "description": "A lightweight SPA framework",
   "dependencies": {},
   "devDependencies": {
