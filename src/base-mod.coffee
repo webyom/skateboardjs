@@ -152,16 +152,18 @@ class BaseMod
 				break if res
 		res
 
-	fadeIn: (relModInst, animateType) ->
+	fadeIn: (relModInst, animateType, cb) ->
 		core.fadeIn @, @_contentDom, relModInst?.hasParent(@_modName), animateType, =>
 			@_afterFadeIn relModInst
+			cb?()
 
-	fadeOut: (relModName, animateType) ->
+	fadeOut: (relModName, animateType, cb) ->
 		@_contentDom.attr 'data-sb-scene', (parseInt(@_contentDom.attr('data-sb-scene')) or 0) + 1
 		@_ifNotCachable relModName, =>
 			core.removeCache @_modName
 		core.fadeOut @, @_contentDom, @hasParent(relModName), animateType, =>
 			@_afterFadeOut relModName
+			cb?()
 
 	captureScene: (callback) ->
 		if @_contentDom

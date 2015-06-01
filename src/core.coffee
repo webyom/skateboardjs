@@ -332,10 +332,10 @@ core = $.extend $({}),
 		and not opt.modOpt \
 		and (not modInst.viewed or _viewChangeInfo.from is 'history' or _opt.alwaysUseCache or modInst.alwaysUseCache) \
 		and modInst.getArgs().join('/') is args.join('/')
-			modInst.fadeIn pModInst, pModInst?.fadeOut(modName)
-			_switchNavTab modInst
-			_onAfterViewChange modName, modInst
-			core.trigger 'afterViewChange', modInst
+			modInst.fadeIn pModInst, pModInst?.fadeOut(modName), ->
+				_switchNavTab modInst
+				_onAfterViewChange modName, modInst
+				core.trigger 'afterViewChange', modInst
 		else
 			_viewChangeInfo.loadFromModCache = false
 			core.removeCache modName

@@ -7,7 +7,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
   BaseMod = require('./base-mod');
 
   module.exports = {
-    version: '0.2.0',
+    version: '0.2.1',
     core: core,
     BaseMod: BaseMod
   };
@@ -450,10 +450,11 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         _onAfterViewChange(modName, modInst);
         core.trigger('afterViewChange', modInst);
       } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (!modInst.viewed || _viewChangeInfo.from === 'history' || _opt.alwaysUseCache || modInst.alwaysUseCache) && modInst.getArgs().join('/') === args.join('/')) {
-        modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0);
-        _switchNavTab(modInst);
-        _onAfterViewChange(modName, modInst);
-        core.trigger('afterViewChange', modInst);
+        modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0, function() {
+          _switchNavTab(modInst);
+          _onAfterViewChange(modName, modInst);
+          return core.trigger('afterViewChange', modInst);
+        });
       } else {
         _viewChangeInfo.loadFromModCache = false;
         core.removeCache(modName);
@@ -999,15 +1000,16 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
       return res;
     };
 
-    BaseMod.prototype.fadeIn = function(relModInst, animateType) {
+    BaseMod.prototype.fadeIn = function(relModInst, animateType, cb) {
       return core.fadeIn(this, this._contentDom, relModInst != null ? relModInst.hasParent(this._modName) : void 0, animateType, (function(_this) {
         return function() {
-          return _this._afterFadeIn(relModInst);
+          _this._afterFadeIn(relModInst);
+          return typeof cb === "function" ? cb() : void 0;
         };
       })(this));
     };
 
-    BaseMod.prototype.fadeOut = function(relModName, animateType) {
+    BaseMod.prototype.fadeOut = function(relModName, animateType, cb) {
       this._contentDom.attr('data-sb-scene', (parseInt(this._contentDom.attr('data-sb-scene')) || 0) + 1);
       this._ifNotCachable(relModName, (function(_this) {
         return function() {
@@ -1016,7 +1018,8 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
       })(this));
       return core.fadeOut(this, this._contentDom, this.hasParent(relModName), animateType, (function(_this) {
         return function() {
-          return _this._afterFadeOut(relModName);
+          _this._afterFadeOut(relModName);
+          return typeof cb === "function" ? cb() : void 0;
         };
       })(this));
     };
