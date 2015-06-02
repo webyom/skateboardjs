@@ -7,7 +7,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
   BaseMod = require('./base-mod');
 
   module.exports = {
-    version: '0.2.1',
+    version: '0.2.2',
     core: core,
     BaseMod: BaseMod
   };
@@ -222,6 +222,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
               opacity: '0'
             };
             cssObj[_cssProps[1]] = 'none';
+            cssObj[_cssProps[2]] = 'translateZ(0)';
             contentDom.css(cssObj).show();
             contentDom[0].offsetTop;
             _requestAnimationFrame(function() {
@@ -316,6 +317,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
               var cssObj;
               cssObj = {};
               cssObj[_cssProps[1]] = "opacity " + (duration / 1000) + "s " + ttf;
+              cssObj[_cssProps[2]] = 'translateZ(0)';
               cssObj['opacity'] = '0';
               contentDom.one(_cssProps[0], callback);
               return contentDom.css(cssObj);
