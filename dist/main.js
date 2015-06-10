@@ -7,7 +7,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
   BaseMod = require('./base-mod');
 
   module.exports = {
-    version: '0.2.2',
+    version: '0.2.3',
     core: core,
     BaseMod: BaseMod
   };
@@ -384,8 +384,6 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     },
     view: function(mark, opt) {
       var args, contentDom, extArgs, loadMod, modInst, modName, pModInst, pModName, tmp, viewId;
-      _viewId++;
-      viewId = _viewId;
       mark = mark.replace(/^\/+/, '');
       opt = opt || {};
       extArgs = opt.args || [];
@@ -447,6 +445,8 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       _previousModName = _currentModName;
       _currentMark = mark;
       _currentModName = modName;
+      _viewId++;
+      viewId = _viewId;
       if (modInst && modInst.isRenderred() && modName !== 'alert' && modName === pModName) {
         modInst.update(args, opt.modOpt);
         _onAfterViewChange(modName, modInst);
@@ -533,9 +533,6 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     },
     load: function(mark, opt, onLoad) {
       var args, contentDom, extArgs, loadId, loadMod, modInst, modName, tmp, viewId;
-      _loadId++;
-      viewId = _viewId;
-      loadId = _loadId;
       mark = mark.replace(/^\/+/, '');
       opt = opt || {};
       extArgs = opt.args || [];
@@ -556,6 +553,9 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       }
       modName = modName || _opt.defaultModName;
       modInst = _modCache[modName];
+      _loadId++;
+      viewId = _viewId;
+      loadId = _loadId;
       if (modName === _currentModName || modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (_opt.alwaysUseCache || modInst.alwaysUseCache) && modInst.getArgs().join('/') === args.join('/')) {
         return onLoad();
       } else {

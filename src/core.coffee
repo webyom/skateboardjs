@@ -270,8 +270,6 @@ core = $.extend $({}),
 			res
 
 	view: (mark, opt) ->
-		_viewId++
-		viewId = _viewId
 		mark = mark.replace /^\/+/, ''
 		opt = opt || {}
 		extArgs = opt.args || []
@@ -321,6 +319,8 @@ core = $.extend $({}),
 		_previousModName = _currentModName
 		_currentMark = mark
 		_currentModName = modName
+		_viewId++
+		viewId = _viewId
 		if modInst \
 		and modInst.isRenderred() \
 		and modName isnt 'alert' \
@@ -382,9 +382,6 @@ core = $.extend $({}),
 		ajaxHistory.setMark(mark, replaceState: opt.replaceState) if not opt.holdMark
 
 	load: (mark, opt, onLoad) ->
-		_loadId++
-		viewId = _viewId
-		loadId = _loadId
 		mark = mark.replace /^\/+/, ''
 		opt = opt || {}
 		extArgs = opt.args || []
@@ -401,6 +398,9 @@ core = $.extend $({}),
 			modName = tmp[0].replace(_opt.modPrefix, '').replace(/^\/+|\/+$/g, '')
 		modName = modName || _opt.defaultModName
 		modInst = _modCache[modName]
+		_loadId++
+		viewId = _viewId
+		loadId = _loadId
 		if modName is _currentModName \
 		or modInst \
 		and modInst.isRenderred() \
