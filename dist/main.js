@@ -7,7 +7,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
   BaseMod = require('./base-mod');
 
   module.exports = {
-    version: '0.2.3',
+    version: '0.2.4',
     core: core,
     BaseMod: BaseMod
   };
@@ -326,10 +326,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
             _requestAnimationFrame(function() {
               return contentDom.animate({
                 opacity: '0'
-              }, duration, ttf, function() {
-                contentDom.hide();
-                return typeof callback === "function" ? callback() : void 0;
-              });
+              }, duration, ttf, callback);
             });
           }
         } else if (animateType === 'slide') {
@@ -553,11 +550,13 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       }
       modName = modName || _opt.defaultModName;
       modInst = _modCache[modName];
-      _loadId++;
+      if (onLoad) {
+        _loadId++;
+      }
       viewId = _viewId;
       loadId = _loadId;
       if (modName === _currentModName || modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (_opt.alwaysUseCache || modInst.alwaysUseCache) && modInst.getArgs().join('/') === args.join('/')) {
-        return onLoad();
+        return typeof onLoad === "function" ? onLoad() : void 0;
       } else {
         core.removeCache(modName);
         if (modInst != null) {
@@ -571,9 +570,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
               try {
                 return modInst = _modCache[modName] = new ModClass(modName, contentDom, args, opt.modOpt, function() {
                   if (viewId === _viewId && loadId === _loadId) {
-                    return onLoad();
-                  } else {
-                    return contentDom.remove();
+                    return typeof onLoad === "function" ? onLoad() : void 0;
                   }
                 });
               } catch (_error) {
@@ -590,19 +587,21 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
               return contentDom.remove();
             }
           }, function() {
-            if (modName !== 'alert') {
-              contentDom.remove();
-              if (viewId === _viewId && loadId === _loadId) {
-                return core.showAlert({
-                  type: 'error',
-                  subType: 'load_mod_fail',
-                  failLoadModName: modName
-                }, {
-                  failLoadModName: modName
-                });
+            if (onLoad) {
+              if (modName !== 'alert') {
+                contentDom.remove();
+                if (viewId === _viewId && loadId === _loadId) {
+                  return core.showAlert({
+                    type: 'error',
+                    subType: 'load_mod_fail',
+                    failLoadModName: modName
+                  }, {
+                    failLoadModName: modName
+                  });
+                }
+              } else {
+                return alert('Failed to load module "' + (opt.failLoadModName || modName) + '"');
               }
-            } else {
-              return alert('Failed to load module "' + (opt.failLoadModName || modName) + '"');
             }
           });
         };

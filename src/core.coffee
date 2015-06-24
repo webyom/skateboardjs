@@ -228,9 +228,7 @@ core = $.extend $({}),
 					_requestAnimationFrame ->
 						contentDom.animate
 							opacity: '0'
-						, duration, ttf, ->
-							contentDom.hide()
-							callback?()
+						, duration, ttf, callback
 			else if animateType is 'slide'
 				sd = $('[data-slide-direction]', contentDom).data 'slide-direction'
 				zIndex = '1'
