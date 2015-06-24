@@ -398,7 +398,7 @@ core = $.extend $({}),
 			modName = tmp[0].replace(_opt.modPrefix, '').replace(/^\/+|\/+$/g, '')
 		modName = modName || _opt.defaultModName
 		modInst = _modCache[modName]
-		_loadId++
+		_loadId++ if onLoad
 		viewId = _viewId
 		loadId = _loadId
 		if modName is _currentModName \
@@ -408,7 +408,7 @@ core = $.extend $({}),
 		and not opt.modOpt \
 		and (_opt.alwaysUseCache or modInst.alwaysUseCache) \
 		and modInst.getArgs().join('/') is args.join('/')
-			onLoad()
+			onLoad?()
 		else
 			core.removeCache modName
 			modInst?.destroy()
@@ -419,9 +419,7 @@ core = $.extend $({}),
 						try
 							modInst = _modCache[modName] = new ModClass modName, contentDom, args, opt.modOpt, ->
 								if viewId is _viewId and loadId is _loadId
-									onLoad()
-								else
-									contentDom.remove()
+									onLoad?()
 						catch e
 							contentDom.remove()
 							console?.error? e.stack
@@ -429,11 +427,12 @@ core = $.extend $({}),
 					else
 						contentDom.remove()
 				, ->
-					if modName isnt 'alert'
-						contentDom.remove()
-						core.showAlert({type: 'error', subType: 'load_mod_fail', failLoadModName: modName}, {failLoadModName: modName}) if viewId is _viewId and loadId is _loadId
-					else
-						alert 'Failed to load module "' + (opt.failLoadModName || modName) + '"'
+					if onLoad
+						if modName isnt 'alert'
+							contentDom.remove()
+							core.showAlert({type: 'error', subType: 'load_mod_fail', failLoadModName: modName}, {failLoadModName: modName}) if viewId is _viewId and loadId is _loadId
+						else
+							alert 'Failed to load module "' + (opt.failLoadModName || modName) + '"'
 			contentDom = _constructContentDom(modName, args, opt.modOpt)
 			loadMod modName, contentDom, args
 
