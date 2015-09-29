@@ -131,7 +131,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     });
     t = new Date();
     $(document.body).on('click', function(e) {
-      var el, mark, ref;
+      var el, mark, modInst, modName, ref;
       el = e.target;
       mark;
       t = new Date();
@@ -143,9 +143,23 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         if (el.target) {
           return;
         }
-        if (mark === ':back') {
+        if ((mark != null ? mark.indexOf(':back') : void 0) === 0) {
           e.preventDefault();
-          return history.back();
+          modName = mark.split('/-/')[1];
+          if (modName) {
+            modInst = _modCache[modName];
+            if (modInst) {
+              return core.view(modInst.getMark(), {
+                from: 'history'
+              });
+            } else {
+              return core.view(_opt.modPrefix + '/' + modName, {
+                from: 'link'
+              });
+            }
+          } else {
+            return history.back();
+          }
         } else if ((mark != null ? mark.indexOf(_opt.modPrefix + '/') : void 0) === 0) {
           e.preventDefault();
           return core.view(mark, {
@@ -445,7 +459,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       _viewId++;
       viewId = _viewId;
       if (modInst && modInst.isRenderred() && modName !== 'alert' && modName === pModName) {
-        modInst.update(args, opt.modOpt);
+        modInst.update(mark, args, opt.modOpt);
         _onAfterViewChange(modName, modInst);
         core.trigger('afterViewChange', modInst);
       } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (!modInst.viewed || _viewChangeInfo.from === 'history' || _opt.alwaysUseCache || modInst.alwaysUseCache) && modInst.getArgs().join('/') === args.join('/')) {
@@ -466,7 +480,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
             var e;
             if (viewId === _viewId && !_modCache[modName]) {
               try {
-                return modInst = _modCache[modName] = new ModClass(modName, contentDom, args, opt.modOpt);
+                return modInst = _modCache[modName] = new ModClass(mark, modName, contentDom, args, opt.modOpt);
               } catch (_error) {
                 e = _error;
                 if (typeof console !== "undefined" && console !== null) {
@@ -489,8 +503,8 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
               return contentDom.remove();
             }
           }, function() {
+            contentDom.remove();
             if (modName !== 'alert') {
-              contentDom.remove();
               if (viewId === _viewId) {
                 return core.showAlert({
                   type: 'error',
@@ -568,7 +582,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
             var e;
             if (viewId === _viewId && loadId === _loadId && !_modCache[modName]) {
               try {
-                return modInst = _modCache[modName] = new ModClass(modName, contentDom, args, opt.modOpt, function() {
+                return modInst = _modCache[modName] = new ModClass(mark, modName, contentDom, args, opt.modOpt, function() {
                   if (viewId === _viewId && loadId === _loadId) {
                     return typeof onLoad === "function" ? onLoad() : void 0;
                   }
@@ -789,7 +803,8 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
   BaseMod = (function() {
     var viewed;
 
-    function BaseMod(modName, contentDom, args, opt, onFirstRender) {
+    function BaseMod(mark, modName, contentDom, args, opt, onFirstRender) {
+      this._mark = mark;
       this._modName = modName;
       if (!contentDom) {
         return this;
@@ -799,6 +814,7 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
       this._args = args || [];
       this._opt = opt || {};
       this._onFirstRender = onFirstRender;
+      this._argMap = this._getArgMap(this._args);
       this.init();
       this.render();
     }
@@ -806,6 +822,8 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
     viewed = false;
 
     BaseMod.prototype.showNavTab = false;
+
+    BaseMod.prototype.argsPattern = '';
 
     BaseMod.prototype.navTab = '';
 
@@ -831,6 +849,22 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
           return _this._contentDom.off(k.shift(), k.join(' '), _this[v]);
         };
       })(this));
+    };
+
+    BaseMod.prototype._getArgMap = function(args) {
+      var i, j, key, keys, len, res;
+      res = {};
+      if (this.argsPattern) {
+        args = this._args;
+        keys = this.argsPattern.replace(/^\/+/, '').split('/');
+        for (i = j = 0, len = keys.length; j < len; i = ++j) {
+          key = keys[i];
+          if (key) {
+            res[key] = args[i] || '';
+          }
+        }
+      }
+      return res;
     };
 
     BaseMod.prototype._ifNotCachable = function(relModName, callback, elseCallback) {
@@ -957,6 +991,10 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
       return $(s, this._contentDom);
     };
 
+    BaseMod.prototype.getMark = function() {
+      return this._mark;
+    };
+
     BaseMod.prototype.getModName = function() {
       return this._modName;
     };
@@ -965,9 +1003,36 @@ define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], funct
       return this._args;
     };
 
-    BaseMod.prototype.update = function(args, opt) {
+    BaseMod.prototype.getArgMap = function() {
+      return this._argMap;
+    };
+
+    BaseMod.prototype.getMarkWithArgs = function(args) {
+      return 'view/' + this._modName + '/-/' + args.join('/');
+    };
+
+    BaseMod.prototype.getMarkWithArgMap = function(argMap) {
+      var i, j, key, keys, len;
+      if (argMap == null) {
+        argMap = {};
+      }
+      keys = this.argsPattern.replace(/^\/+/, '').split('/');
+      for (i = j = 0, len = keys.length; j < len; i = ++j) {
+        key = keys[i];
+        keys[i] = argMap[key] || '';
+      }
+      if (keys.length) {
+        return 'view/' + this._modName + '/-/' + keys.join('/');
+      } else {
+        return 'view/' + this._modName;
+      }
+    };
+
+    BaseMod.prototype.update = function(mark, args, opt) {
+      this._mark = mark;
       this._args = args || this._args;
       this._opt = opt || this._opt;
+      this._argMap = this._getArgMap(this._args);
       return this.refresh();
     };
 

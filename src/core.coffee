@@ -89,13 +89,20 @@ _init = ->
 			mark = el.pathname?.replace /^\/+/, ''
 			if el.target
 				return
-			if mark is ':back'
+			if mark?.indexOf(':back') is 0
 				e.preventDefault()
-				history.back()
+				modName = mark.split('/-/')[1]
+				if modName
+					modInst = _modCache[modName]
+					if modInst
+						core.view modInst.getMark(), from: 'history'
+					else
+						core.view _opt.modPrefix + '/' + modName, from: 'link'
+				else
+					history.back()
 			else if mark?.indexOf(_opt.modPrefix + '/') is 0
 				e.preventDefault()
-				core.view mark,
-					from: 'link'
+				core.view mark, from: 'link'
 	.on 'click', '[data-refresh-btn]', () ->
 		modInst = _modCache[_currentModName]
 		modInst?.refresh()
@@ -323,7 +330,7 @@ core = $.extend $({}),
 		and modInst.isRenderred() \
 		and modName isnt 'alert' \
 		and modName is pModName
-			modInst.update args, opt.modOpt
+			modInst.update mark, args, opt.modOpt
 			_onAfterViewChange modName, modInst
 			core.trigger 'afterViewChange', modInst
 		else if modInst \
@@ -345,7 +352,7 @@ core = $.extend $({}),
 				require [_opt.modBase + 'mod/' + modName + '/main'], (ModClass) ->
 					if viewId is _viewId and not _modCache[modName]
 						try
-							modInst = _modCache[modName] = new ModClass modName, contentDom, args, opt.modOpt
+							modInst = _modCache[modName] = new ModClass mark, modName, contentDom, args, opt.modOpt
 						catch e
 							console?.error? e.stack
 							throw e
@@ -360,8 +367,8 @@ core = $.extend $({}),
 					else
 						contentDom.remove()
 				, ->
+					contentDom.remove()
 					if modName isnt 'alert'
-						contentDom.remove()
 						core.showAlert({type: 'error', subType: 'load_mod_fail', failLoadModName: modName}, {failLoadModName: modName, holdMark: true}) if viewId is _viewId
 					else
 						alert 'Failed to load module "' + (opt.failLoadModName || modName) + '"'
@@ -415,7 +422,7 @@ core = $.extend $({}),
 				require [_opt.modBase + 'mod/' + modName + '/main'], (ModClass) ->
 					if viewId is _viewId and loadId is _loadId and not _modCache[modName]
 						try
-							modInst = _modCache[modName] = new ModClass modName, contentDom, args, opt.modOpt, ->
+							modInst = _modCache[modName] = new ModClass mark, modName, contentDom, args, opt.modOpt, ->
 								if viewId is _viewId and loadId is _loadId
 									onLoad?()
 						catch e

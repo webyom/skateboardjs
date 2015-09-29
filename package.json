@@ -1,11 +1,11 @@
 {
   "name": "skateboard",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "A lightweight SPA framework",
   "dependencies": {},
   "devDependencies": {
     "coffee-script": "^1.7.1",
     "gulp": "^3.8.5",
-    "gulp-amd-bundler": "^0.1.0"
+    "gulp-amd-bundler": "^0.1.25"
   }
 }

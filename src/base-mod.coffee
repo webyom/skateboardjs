@@ -2,7 +2,8 @@ $ = require 'jquery'
 core = require './core'
 
 class BaseMod
-	constructor: (modName, contentDom, args, opt, onFirstRender) ->
+	constructor: (mark, modName, contentDom, args, opt, onFirstRender) ->
+		@_mark = mark
 		@_modName = modName
 		if not contentDom
 			return @
@@ -11,11 +12,13 @@ class BaseMod
 		@_args = args || []
 		@_opt = opt || {}
 		@_onFirstRender = onFirstRender
+		@_argMap = @_getArgMap @_args
 		@init()
 		@render()
 
 	viewed = false
 	showNavTab: false
+	argsPattern: ''
 	navTab: ''
 	events: {}
 	parentModNames:
@@ -30,6 +33,15 @@ class BaseMod
 		$.each @events, (k, v) =>
 			k = k.split ' '
 			@_contentDom.off k.shift(), k.join(' '), @[v]
+
+	_getArgMap: (args) ->
+		res = {}
+		if @argsPattern
+			args = @_args
+			keys = @argsPattern.replace(/^\/+/, '').split '/'
+			for key, i in keys
+				res[key] = args[i] || '' if key
+		res
 
 	_ifNotCachable: (relModName, callback, elseCallback) ->
 		cachable = if typeof @cachable isnt 'undefined' then @cachable else core.modCacheable()
@@ -122,15 +134,35 @@ class BaseMod
 	$: (s) ->
 		$ s, @_contentDom
 
+	getMark: ->
+		@_mark
+
 	getModName: ->
 		@_modName
 
 	getArgs: ->
 		@_args
 
-	update: (args, opt) ->
+	getArgMap: ->
+		@_argMap
+
+	getMarkWithArgs: (args) ->
+		'view/' + @_modName + '/-/' + args.join('/')
+
+	getMarkWithArgMap: (argMap = {}) ->
+		keys = @argsPattern.replace(/^\/+/, '').split '/'
+		for key, i in keys
+			keys[i] = argMap[key] || ''
+		if keys.length
+			'view/' + @_modName + '/-/' + keys.join('/')
+		else
+			'view/' + @_modName
+
+	update: (mark, args, opt) ->
+		@_mark = mark
 		@_args = args || @_args
 		@_opt = opt || @_opt
+		@_argMap = @_getArgMap @_args
 		@refresh()
 
 	refresh: ->
