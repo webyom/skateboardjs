@@ -93,11 +93,7 @@ _init = ->
 				e.preventDefault()
 				modName = mark.split('/-/')[1]
 				if modName
-					modInst = _modCache[modName]
-					if modInst
-						core.view modInst.getMark(), from: 'history'
-					else
-						core.view _opt.modPrefix + '/' + modName, from: 'link'
+					core.back modName
 				else
 					history.back()
 			else if mark?.indexOf(_opt.modPrefix + '/') is 0
@@ -440,6 +436,13 @@ core = $.extend $({}),
 							alert 'Failed to load module "' + (opt.failLoadModName || modName) + '"'
 			contentDom = _constructContentDom(modName, args, opt.modOpt)
 			loadMod modName, contentDom, args
+
+	back: (modName) ->
+		modInst = _modCache[modName]
+		if modInst
+			core.view modInst.getMark(), from: 'history'
+		else
+			core.view _opt.modPrefix + '/' + modName, from: 'link'
 
 	getViewChangeInfo: ->
 		_viewChangeInfo

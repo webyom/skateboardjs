@@ -7,7 +7,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
   BaseMod = require('./base-mod');
 
   module.exports = {
-    version: '0.2.4',
+    version: '0.2.6',
     core: core,
     BaseMod: BaseMod
   };
@@ -131,7 +131,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     });
     t = new Date();
     $(document.body).on('click', function(e) {
-      var el, mark, modInst, modName, ref;
+      var el, mark, modName, ref;
       el = e.target;
       mark;
       t = new Date();
@@ -147,16 +147,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
           e.preventDefault();
           modName = mark.split('/-/')[1];
           if (modName) {
-            modInst = _modCache[modName];
-            if (modInst) {
-              return core.view(modInst.getMark(), {
-                from: 'history'
-              });
-            } else {
-              return core.view(_opt.modPrefix + '/' + modName, {
-                from: 'link'
-              });
-            }
+            return core.back(modName);
           } else {
             return history.back();
           }
@@ -621,6 +612,19 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         };
         contentDom = _constructContentDom(modName, args, opt.modOpt);
         return loadMod(modName, contentDom, args);
+      }
+    },
+    back: function(modName) {
+      var modInst;
+      modInst = _modCache[modName];
+      if (modInst) {
+        return core.view(modInst.getMark(), {
+          from: 'history'
+        });
+      } else {
+        return core.view(_opt.modPrefix + '/' + modName, {
+          from: 'link'
+        });
       }
     },
     getViewChangeInfo: function() {
