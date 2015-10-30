@@ -13,6 +13,8 @@ _container = $(document.body)
 _viewId = 0
 _loadId = 0
 
+_ARGS_SEPARATOR = '/-/'
+
 _cssProps = (->
 	el = document.createElement 'div'
 	props =
@@ -26,6 +28,12 @@ _cssProps = (->
 
 _requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || (callback) ->
 	setTimeout callback, 16
+
+_trimSlash = (str) ->
+	if str
+		str.replace /^\/+|\/+$/g, ''
+	else
+		''
 
 _switchNavTab = (modInst) ->
 	if _opt.switchNavTab
@@ -91,9 +99,9 @@ _init = ->
 				return
 			if mark?.indexOf(':back') is 0
 				e.preventDefault()
-				modName = mark.split('/-/')[1]
-				if modName
-					core.back modName
+				tmp = mark.split _ARGS_SEPARATOR
+				if tmp.length > 1
+					core.back tmp[1], tmp[2]
 				else
 					history.back()
 			else if mark?.indexOf(_opt.modPrefix + '/') is 0
@@ -110,7 +118,7 @@ core = $.extend $({}),
 		_opt.defaultModName ?= 'home'
 		_opt.modBase ?= ''
 		_opt.modPrefix ?= 'view'
-		_opt.modPrefix = _opt.modPrefix.replace /^\/+|\/+$/g, ''
+		_opt.modPrefix = _trimSlash _opt.modPrefix
 		_init()
 
 	modCacheable: ->
@@ -271,7 +279,7 @@ core = $.extend $({}),
 			res
 
 	view: (mark, opt) ->
-		mark = mark.replace /^\/+/, ''
+		mark = _trimSlash mark
 		opt = opt || {}
 		extArgs = opt.args || []
 		if opt.reload
@@ -284,19 +292,15 @@ core = $.extend $({}),
 				ajaxHistory.setMark mark
 				location.reload()
 			return
-		if mark.indexOf('/-/') > 0
-			tmp = mark.split '/-/'
-			args = tmp[1] && tmp[1].split('/') || []
-		else
-			tmp = mark.split '/args...'
-			args = tmp[1] && tmp[1].split('.') || []
+		tmp = mark.split _ARGS_SEPARATOR
+		args = tmp[1] && tmp[1].split('/') || []
 		$.each extArgs, (i, arg) ->
 			if arg
 				args[i] = arg
 		pModName = _currentModName
 		pModInst = _modCache[pModName]
 		if mark.indexOf(_opt.modPrefix + '/') is 0
-			modName = tmp[0].replace(_opt.modPrefix, '').replace(/^\/+|\/+$/g, '')
+			modName = _trimSlash tmp[0].replace(_opt.modPrefix, '')
 		modName = modName || _opt.defaultModName
 		modInst = _modCache[modName]
 		_viewChangeInfo =
@@ -383,20 +387,16 @@ core = $.extend $({}),
 		ajaxHistory.setMark(mark, replaceState: opt.replaceState) if not opt.holdMark
 
 	load: (mark, opt, onLoad) ->
-		mark = mark.replace /^\/+/, ''
+		mark = _trimSlash mark
 		opt = opt || {}
 		extArgs = opt.args || []
-		if mark.indexOf('/-/') > 0
-			tmp = mark.split '/-/'
-			args = tmp[1] && tmp[1].split('/') || []
-		else
-			tmp = mark.split '/args...'
-			args = tmp[1] && tmp[1].split('.') || []
+		tmp = mark.split _ARGS_SEPARATOR
+		args = tmp[1] && tmp[1].split('/') || []
 		$.each extArgs, (i, arg) ->
 			if arg
 				args[i] = arg
 		if mark.indexOf(_opt.modPrefix + '/') is 0
-			modName = tmp[0].replace(_opt.modPrefix, '').replace(/^\/+|\/+$/g, '')
+			modName = _trimSlash tmp[0].replace(_opt.modPrefix, '')
 		modName = modName || _opt.defaultModName
 		modInst = _modCache[modName]
 		_loadId++ if onLoad
@@ -437,12 +437,28 @@ core = $.extend $({}),
 			contentDom = _constructContentDom(modName, args, opt.modOpt)
 			loadMod modName, contentDom, args
 
-	back: (modName) ->
-		modInst = _modCache[modName]
-		if modInst
-			core.view modInst.getMark(), from: 'history'
+	back: (modName, args) ->
+		modName = _trimSlash modName
+		args = _trimSlash args
+		if modName
+			modInst = _modCache[modName]
+			if modInst
+				if args
+					mark = _opt.modPrefix + '/' + modName + _ARGS_SEPARATOR + args
+					if mark is modInst.getMark()
+						core.view mark, from: 'history'
+					else
+						core.view mark, from: 'link'
+				else
+					core.view modInst.getMark(), from: 'history'
+			else
+				if args
+					mark = _opt.modPrefix + '/' + modName + _ARGS_SEPARATOR + args
+				else
+					mark = _opt.modPrefix + '/' + modName
+				core.view mark, from: 'link'
 		else
-			core.view _opt.modPrefix + '/' + modName, from: 'link'
+			history.back()
 
 	getViewChangeInfo: ->
 		_viewChangeInfo

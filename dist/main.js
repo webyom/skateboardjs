@@ -18,7 +18,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
 
 define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], function(require, exports, module) {
 (function() {
-  var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _init, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _scrollTop, _switchNavTab, _viewChangeInfo, _viewId, ajaxHistory, core;
+  var $, _ARGS_SEPARATOR, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _init, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core;
 
   $ = require('jquery');
 
@@ -46,6 +46,8 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
 
   _loadId = 0;
 
+  _ARGS_SEPARATOR = '/-/';
+
   _cssProps = (function() {
     var el, p, props;
     el = document.createElement('div');
@@ -63,6 +65,14 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
 
   _requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function(callback) {
     return setTimeout(callback, 16);
+  };
+
+  _trimSlash = function(str) {
+    if (str) {
+      return str.replace(/^\/+|\/+$/g, '');
+    } else {
+      return '';
+    }
   };
 
   _switchNavTab = function(modInst) {
@@ -131,7 +141,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     });
     t = new Date();
     $(document.body).on('click', function(e) {
-      var el, mark, modName, ref;
+      var el, mark, ref, tmp;
       el = e.target;
       mark;
       t = new Date();
@@ -145,9 +155,9 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         }
         if ((mark != null ? mark.indexOf(':back') : void 0) === 0) {
           e.preventDefault();
-          modName = mark.split('/-/')[1];
-          if (modName) {
-            return core.back(modName);
+          tmp = mark.split(_ARGS_SEPARATOR);
+          if (tmp.length > 1) {
+            return core.back(tmp[1], tmp[2]);
           } else {
             return history.back();
           }
@@ -180,7 +190,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       if (_opt.modPrefix == null) {
         _opt.modPrefix = 'view';
       }
-      _opt.modPrefix = _opt.modPrefix.replace(/^\/+|\/+$/g, '');
+      _opt.modPrefix = _trimSlash(_opt.modPrefix);
       return _init();
     },
     modCacheable: function() {
@@ -386,7 +396,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     },
     view: function(mark, opt) {
       var args, contentDom, extArgs, loadMod, modInst, modName, pModInst, pModName, tmp, viewId;
-      mark = mark.replace(/^\/+/, '');
+      mark = _trimSlash(mark);
       opt = opt || {};
       extArgs = opt.args || [];
       if (opt.reload) {
@@ -402,13 +412,8 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         }
         return;
       }
-      if (mark.indexOf('/-/') > 0) {
-        tmp = mark.split('/-/');
-        args = tmp[1] && tmp[1].split('/') || [];
-      } else {
-        tmp = mark.split('/args...');
-        args = tmp[1] && tmp[1].split('.') || [];
-      }
+      tmp = mark.split(_ARGS_SEPARATOR);
+      args = tmp[1] && tmp[1].split('/') || [];
       $.each(extArgs, function(i, arg) {
         if (arg) {
           return args[i] = arg;
@@ -417,7 +422,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
       pModName = _currentModName;
       pModInst = _modCache[pModName];
       if (mark.indexOf(_opt.modPrefix + '/') === 0) {
-        modName = tmp[0].replace(_opt.modPrefix, '').replace(/^\/+|\/+$/g, '');
+        modName = _trimSlash(tmp[0].replace(_opt.modPrefix, ''));
       }
       modName = modName || _opt.defaultModName;
       modInst = _modCache[modName];
@@ -535,23 +540,18 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
     },
     load: function(mark, opt, onLoad) {
       var args, contentDom, extArgs, loadId, loadMod, modInst, modName, tmp, viewId;
-      mark = mark.replace(/^\/+/, '');
+      mark = _trimSlash(mark);
       opt = opt || {};
       extArgs = opt.args || [];
-      if (mark.indexOf('/-/') > 0) {
-        tmp = mark.split('/-/');
-        args = tmp[1] && tmp[1].split('/') || [];
-      } else {
-        tmp = mark.split('/args...');
-        args = tmp[1] && tmp[1].split('.') || [];
-      }
+      tmp = mark.split(_ARGS_SEPARATOR);
+      args = tmp[1] && tmp[1].split('/') || [];
       $.each(extArgs, function(i, arg) {
         if (arg) {
           return args[i] = arg;
         }
       });
       if (mark.indexOf(_opt.modPrefix + '/') === 0) {
-        modName = tmp[0].replace(_opt.modPrefix, '').replace(/^\/+|\/+$/g, '');
+        modName = _trimSlash(tmp[0].replace(_opt.modPrefix, ''));
       }
       modName = modName || _opt.defaultModName;
       modInst = _modCache[modName];
@@ -614,17 +614,41 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         return loadMod(modName, contentDom, args);
       }
     },
-    back: function(modName) {
-      var modInst;
-      modInst = _modCache[modName];
-      if (modInst) {
-        return core.view(modInst.getMark(), {
-          from: 'history'
-        });
+    back: function(modName, args) {
+      var mark, modInst;
+      modName = _trimSlash(modName);
+      args = _trimSlash(args);
+      if (modName) {
+        modInst = _modCache[modName];
+        if (modInst) {
+          if (args) {
+            mark = _opt.modPrefix + '/' + modName + _ARGS_SEPARATOR + args;
+            if (mark === modInst.getMark()) {
+              return core.view(mark, {
+                from: 'history'
+              });
+            } else {
+              return core.view(mark, {
+                from: 'link'
+              });
+            }
+          } else {
+            return core.view(modInst.getMark(), {
+              from: 'history'
+            });
+          }
+        } else {
+          if (args) {
+            mark = _opt.modPrefix + '/' + modName + _ARGS_SEPARATOR + args;
+          } else {
+            mark = _opt.modPrefix + '/' + modName;
+          }
+          return core.view(mark, {
+            from: 'link'
+          });
+        }
       } else {
-        return core.view(_opt.modPrefix + '/' + modName, {
-          from: 'link'
-        });
+        return history.back();
       }
     },
     getViewChangeInfo: function() {
