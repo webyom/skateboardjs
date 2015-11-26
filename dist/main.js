@@ -7,7 +7,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
   BaseMod = require('./base-mod');
 
   module.exports = {
-    version: '0.2.6',
+    version: '0.2.8',
     core: core,
     BaseMod: BaseMod
   };

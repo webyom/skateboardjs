@@ -1,7 +1,36 @@
 {
-  "name": "skateboard",
-  "version": "0.2.7",
+  "name": "skateboardjs",
+  "version": "0.2.8",
   "description": "A lightweight SPA framework",
+  "main": "dist/main.js",
+  "keywords": [
+    "SPA",
+    "Framework"
+  ],
+  "homepage": "https://github.com/webyom/skateboardjs",
+  "author": {
+    "name": "Gary Wang",
+    "email": "webyom@gmail.com",
+    "url": "http://webyom.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/webyom/skateboardjs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/webyom/skateboardjs/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/webyom/skateboardjs/blob/master/LICENSE-MIT"
+    }
+  ],
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "scripts": {
+  },
   "dependencies": {},
   "devDependencies": {
     "coffee-script": "^1.7.1",

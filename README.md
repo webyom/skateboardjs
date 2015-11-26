@@ -1,2 +1,2 @@
-# Skateboard
+# Skateboardjs
 A lightweight SPA framework
