@@ -1,13 +1,13 @@
-define(['require', 'exports', 'module', './core', './base-mod'], function(require, exports, module) {
+define(['require', 'exports', 'module', './skateboardjs/core', './skateboardjs/base-mod'], function(require, exports, module) {
 (function() {
   var BaseMod, core;
 
-  core = require('./core');
+  core = require('./skateboardjs/core');
 
-  BaseMod = require('./base-mod');
+  BaseMod = require('./skateboardjs/base-mod');
 
   module.exports = {
-    version: '0.2.8',
+    version: '0.2.9',
     core: core,
     BaseMod: BaseMod
   };
@@ -16,7 +16,7 @@ define(['require', 'exports', 'module', './core', './base-mod'], function(requir
 
 });
 
-define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], function(require, exports, module) {
+define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax-history'], function(require, exports, module) {
 (function() {
   var $, _ARGS_SEPARATOR, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _init, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core;
 
@@ -473,12 +473,12 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         $('[data-sb-mod="' + modName + '"]', _container).remove();
         loadMod = function(modName, contentDom, args) {
           return require([_opt.modBase + 'mod/' + modName + '/main'], function(ModClass) {
-            var e;
+            var e, error;
             if (viewId === _viewId && !_modCache[modName]) {
               try {
                 return modInst = _modCache[modName] = new ModClass(mark, modName, contentDom, args, opt.modOpt);
-              } catch (_error) {
-                e = _error;
+              } catch (error) {
+                e = error;
                 if (typeof console !== "undefined" && console !== null) {
                   if (typeof console.error === "function") {
                     console.error(e.stack);
@@ -570,7 +570,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
         $('[data-sb-mod="' + modName + '"]', _container).remove();
         loadMod = function(modName, contentDom, args) {
           return require([_opt.modBase + 'mod/' + modName + '/main'], function(ModClass) {
-            var e;
+            var e, error;
             if (viewId === _viewId && loadId === _loadId && !_modCache[modName]) {
               try {
                 return modInst = _modCache[modName] = new ModClass(mark, modName, contentDom, args, opt.modOpt, function() {
@@ -578,8 +578,8 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
                     return typeof onLoad === "function" ? onLoad() : void 0;
                   }
                 });
-              } catch (_error) {
-                e = _error;
+              } catch (error) {
+                e = error;
                 contentDom.remove();
                 if (typeof console !== "undefined" && console !== null) {
                   if (typeof console.error === "function") {
@@ -684,7 +684,7 @@ define('./core', ['require', 'exports', 'module', 'jquery', './ajax-history'], f
 
 });
 
-define('./ajax-history', ['require', 'exports', 'module', 'jquery'], function(require, exports, module) {
+define('./skateboardjs/ajax-history', ['require', 'exports', 'module', 'jquery'], function(require, exports, module) {
 (function() {
   var $, _cache, _cacheEnabled, _cacheSize, _checkMark, _currentMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _markCacheIndexHash, _previousMark, _setCache, _updateCurrentMark, clearCache, getCache, getMark, getPrevMark, init, isSupportHistoryState, setCache, setListener, setMark;
 
@@ -820,7 +820,7 @@ define('./ajax-history', ['require', 'exports', 'module', 'jquery'], function(re
 
 });
 
-define('./base-mod', ['require', 'exports', 'module', 'jquery', './core'], function(require, exports, module) {
+define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './core'], function(require, exports, module) {
 (function() {
   var $, BaseMod, core;
 
