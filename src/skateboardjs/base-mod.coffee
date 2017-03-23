@@ -2,46 +2,38 @@ $ = require 'jquery'
 core = require './core'
 
 class BaseMod
-	constructor: (mark, modName, contentDom, args, opt, onFirstRender) ->
+	constructor: (mark, modName, contentDom, params, opt, onFirstRender) ->
 		@_mark = mark
 		@_modName = modName
 		if not contentDom
 			return @
 		@_contentDom = contentDom
 		@_bindEvents()
-		@_args = args || []
+		@_params = params || {}
 		@_opt = opt || {}
 		@_onFirstRender = onFirstRender
-		@_argMap = @_getArgMap @_args
 		@init()
-		@render()
 
-	viewed = false
+	viewed: false
 	showNavTab: false
-	argsPattern: ''
 	navTab: ''
 	events: {}
 	parentModNames:
 		'home': 1
+	headerTpl: ''
+	bodyTpl: ''
+	fixedFooterTpl: ''
+	ReactComponent: null
 
 	_bindEvents: ->
-		$.each @events, (k, v) =>
+		for own k, v of @events
 			k = k.split ' '
 			@_contentDom.on k.shift(), k.join(' '), @[v]
 
 	_unbindEvents: ->
-		$.each @events, (k, v) =>
+		for own k, v of @events
 			k = k.split ' '
 			@_contentDom.off k.shift(), k.join(' '), @[v]
-
-	_getArgMap: (args) ->
-		res = {}
-		if @argsPattern
-			args = @_args
-			keys = @argsPattern.replace(/^\/+/, '').split '/'
-			for key, i in keys
-				res[key] = args[i] || '' if key
-		res
 
 	_ifNotCachable: (relModName, callback, elseCallback) ->
 		cachable = if typeof @cachable isnt 'undefined' then @cachable else core.modCacheable()
@@ -82,21 +74,21 @@ class BaseMod
 			if typeof data is 'string'
 				$('> .sb-mod__header', @_contentDom).html data
 			else
-				$('> .sb-mod__header', @_contentDom).html @_headerTpl.render data
+				$('> .sb-mod__header', @_contentDom).html @headerTpl.render data
 
 	_renderBody: (data) ->
 		if @_contentDom
 			if typeof data is 'string'
 				$('> .sb-mod__body', @_contentDom).html data
 			else
-				$('> .sb-mod__body', @_contentDom).html @_bodyTpl.render data
+				$('> .sb-mod__body', @_contentDom).html @bodyTpl.render data
 
 	_renderFixedFooter: (data) ->
 		if @_contentDom
 			if typeof data is 'string'
 				$('> .sb-mod__fixed-footer', @_contentDom).html(data).show()
 			else
-				$('> .sb-mod__fixed-footer', @_contentDom).html(@_fixedFooterTpl.render data).show()
+				$('> .sb-mod__fixed-footer', @_contentDom).html(@fixedFooterTpl.render data).show()
 
 	_renderError: (msg) ->
 		if @_contentDom
@@ -115,18 +107,28 @@ class BaseMod
 		@_onFirstRender = null
 
 	render: ->
-		if @_headerTpl
-			@_renderHeader
-				args: @_args
-				opt: @_opt
-		if @_bodyTpl
-			@_renderBody
-				args: @_args
-				opt: @_opt
-		if @_fixedFooterTpl
-			@_renderFixedFooter
-				args: @_args
-				opt: @_opt
+		if @ReactComponent
+			react = core.getReact()
+			ele = react.createElement.call react.React, @ReactComponent,
+				route:
+					path: @_modName
+					params: @_params
+			container = this._contentDom[0]
+			container.innerHTML = ''
+			react.render.call react.ReactDOM, ele, container
+		else
+			if @headerTpl
+				@_renderHeader
+					params: @_params
+					opt: @_opt
+			if @bodyTpl
+				@_renderBody
+					params: @_params
+					opt: @_opt
+			if @fixedFooterTpl
+				@_renderFixedFooter
+					params: @_params
+					opt: @_opt
 		@_onRender()
 
 	init: ->
@@ -140,29 +142,13 @@ class BaseMod
 	getModName: ->
 		@_modName
 
-	getArgs: ->
-		@_args
+	getParams: ->
+		@_params
 
-	getArgMap: ->
-		@_argMap
-
-	getMarkWithArgs: (args) ->
-		'view/' + @_modName + '/-/' + args.join('/')
-
-	getMarkWithArgMap: (argMap = {}) ->
-		keys = @argsPattern.replace(/^\/+/, '').split '/'
-		for key, i in keys
-			keys[i] = argMap[key] || ''
-		if keys.length
-			'view/' + @_modName + '/-/' + keys.join('/')
-		else
-			'view/' + @_modName
-
-	update: (mark, args, opt) ->
+	update: (mark, params, opt) ->
 		@_mark = mark
-		@_args = args || @_args
+		@_params = params || @_params
 		@_opt = opt || @_opt
-		@_argMap = @_getArgMap @_args
 		@refresh()
 
 	refresh: ->
@@ -179,7 +165,7 @@ class BaseMod
 	hasParent: (modName) ->
 		res = @_modName.indexOf(modName + '/') is 0
 		if not res
-			for k, v of @parentModNames
+			for own k, v of @parentModNames
 				res = modName is k or k.indexOf(modName + '/') is 0
 				break if res
 		res
@@ -208,6 +194,9 @@ class BaseMod
 	destroy: () ->
 		core.removeCache @_modName
 		@_unbindEvents()
+		if @ReactComponent
+			react = core.getReact()
+			react.unmountComponentAtNode.call react.ReactDOM, @_contentDom[0] if react.unmountComponentAtNode
 		@_contentDom.remove()
 		@_contentDom = null
 

@@ -18,7 +18,8 @@ define(['require', 'exports', 'module', './skateboardjs/core', './skateboardjs/b
 
 define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax-history'], function(require, exports, module) {
 (function() {
-  var $, _ARGS_SEPARATOR, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _init, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core;
+  var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _getParamsObj, _getParamsStr, _init, _isSameParams, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core,
+    hasProp = {}.hasOwnProperty;
 
   $ = require('jquery');
 
@@ -46,8 +47,6 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
 
   _loadId = 0;
 
-  _ARGS_SEPARATOR = '/-/';
-
   _cssProps = (function() {
     var el, p, props;
     el = document.createElement('div');
@@ -73,6 +72,57 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
     } else {
       return '';
     }
+  };
+
+  _getParamsStr = function(params) {
+    var key, tmp, type, val;
+    if (!params) {
+      return '';
+    } else {
+      type = typeof params;
+      if (type === 'string') {
+        return params;
+      } else {
+        tmp = [];
+        for (key in params) {
+          if (!hasProp.call(params, key)) continue;
+          val = params[key];
+          if (typeof val === 'string') {
+            tmp.push(key + "=" + val);
+          }
+        }
+        return tmp.join('&');
+      }
+    }
+  };
+
+  _getParamsObj = function(paramsStr) {
+    var i, key, len, params, ref, tmp, type, val;
+    params = {};
+    if (paramsStr) {
+      type = typeof paramsStr;
+      if (type === 'string') {
+        ref = paramsStr.split('&');
+        for (i = 0, len = ref.length; i < len; i++) {
+          tmp = ref[i];
+          tmp = tmp.split('=');
+          params[tmp[0]] = tmp[1];
+        }
+      } else {
+        for (key in paramsStr) {
+          if (!hasProp.call(paramsStr, key)) continue;
+          val = paramsStr[key];
+          if (typeof val === 'string') {
+            params[key] = val;
+          }
+        }
+      }
+    }
+    return params;
+  };
+
+  _isSameParams = function(params1, params2) {
+    return _getParamsStr(params1) === _getParamsStr(params2);
   };
 
   _switchNavTab = function(modInst) {
@@ -107,15 +157,18 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
     }
   };
 
-  _constructContentDom = function(modName, args, opt) {
+  _constructContentDom = function(modName, params, opt) {
     var contentDom, titleTpl;
+    if (params == null) {
+      params = {};
+    }
     if (_opt.constructContentDom) {
-      contentDom = _opt.constructContentDom(modName, args, opt);
+      contentDom = _opt.constructContentDom(modName, params, opt);
     } else {
-      titleTpl = require(_opt.modBase + 'mod/' + modName + '/title.tpl.html');
+      titleTpl = require(_opt.modBase + modName + '/title.tpl.html');
       contentDom = $([
         '<div class="sb-mod sb-mod--' + modName.replace(/\//g, '-') + '" data-sb-mod="' + modName + '" data-sb-scene="0">', '<header class="sb-mod__header">', titleTpl ? titleTpl.render({
-          args: args,
+          params: params,
           opt: opt
         }) : '<h1 class="title"></h1>', '</header>', '<div class="sb-mod__body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">', '<div class="sb-mod__body__msg" data-sb-mod-not-renderred>', '内容正在赶来，请稍候...', '</div>', '</div>', '<div class="sb-mod__fixed-footer" style="display: none;">', '</div>', '</div>'
       ].join('')).prependTo(_container);
@@ -155,9 +208,10 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
         }
         if ((mark != null ? mark.indexOf(':back') : void 0) === 0) {
           e.preventDefault();
-          tmp = mark.split(_ARGS_SEPARATOR);
+          tmp = mark.split(':back:');
           if (tmp.length > 1) {
-            return core.back(tmp[1], tmp[2]);
+            tmp = tmp[1].split('?');
+            return core.back(tmp[0], tmp[1]);
           } else {
             return history.back();
           }
@@ -195,6 +249,19 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
     },
     modCacheable: function() {
       return _opt.modCacheable;
+    },
+    getReact: function() {
+      var ref, ref1, ref2;
+      if (!_opt.react) {
+        _opt.react = {
+          React: window.React,
+          createElement: (ref = window.React) != null ? ref.createElement : void 0,
+          ReactDOM: window.ReactDOM,
+          render: (ref1 = window.ReactDOM) != null ? ref1.render : void 0,
+          unmountComponentAtNode: (ref2 = window.ReactDOM) != null ? ref2.unmountComponentAtNode : void 0
+        };
+      }
+      return _opt.react;
     },
     getPreviousModName: function() {
       return _previousModName;
@@ -395,10 +462,9 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
       }
     },
     view: function(mark, opt) {
-      var args, contentDom, extArgs, loadMod, modInst, modName, pModInst, pModName, tmp, viewId;
+      var contentDom, loadMod, markParts, modInst, modName, pModInst, pModName, params, viewId;
       mark = _trimSlash(mark);
       opt = opt || {};
-      extArgs = opt.args || [];
       if (opt.reload) {
         if (ajaxHistory.isSupportHistoryState()) {
           if (location.origin + '/' + mark === location.href) {
@@ -412,17 +478,12 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
         }
         return;
       }
-      tmp = mark.split(_ARGS_SEPARATOR);
-      args = tmp[1] && tmp[1].split('/') || [];
-      $.each(extArgs, function(i, arg) {
-        if (arg) {
-          return args[i] = arg;
-        }
-      });
+      markParts = mark.split('?');
+      params = $.extend(_getParamsObj(markParts[1]), _getParamsObj(opt.params));
       pModName = _currentModName;
       pModInst = _modCache[pModName];
       if (mark.indexOf(_opt.modPrefix + '/') === 0) {
-        modName = _trimSlash(tmp[0].replace(_opt.modPrefix, ''));
+        modName = _trimSlash(markParts[0].replace(_opt.modPrefix, ''));
       }
       modName = modName || _opt.defaultModName;
       modInst = _modCache[modName];
@@ -434,7 +495,7 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
         toModName: modName,
         fromMark: _currentMark,
         toMark: mark,
-        args: args,
+        params: params,
         opt: opt.modOpt
       };
       if ((typeof _opt.onBeforeViewChange === "function" ? _opt.onBeforeViewChange(modName, modInst) : void 0) === false) {
@@ -455,10 +516,10 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
       _viewId++;
       viewId = _viewId;
       if (modInst && modInst.isRenderred() && modName !== 'alert' && modName === pModName) {
-        modInst.update(mark, args, opt.modOpt);
+        modInst.update(mark, params, opt.modOpt);
         _onAfterViewChange(modName, modInst);
         core.trigger('afterViewChange', modInst);
-      } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (!modInst.viewed || _viewChangeInfo.from === 'history' || _opt.alwaysUseCache || modInst.alwaysUseCache) && modInst.getArgs().join('/') === args.join('/')) {
+      } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (!modInst.viewed || _viewChangeInfo.from === 'history' || _opt.alwaysUseCache || modInst.alwaysUseCache) && _isSameParams(modInst.getParams(), params)) {
         modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0, function() {
           _switchNavTab(modInst);
           _onAfterViewChange(modName, modInst);
@@ -471,12 +532,13 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
           modInst.destroy();
         }
         $('[data-sb-mod="' + modName + '"]', _container).remove();
-        loadMod = function(modName, contentDom, args) {
-          return require([_opt.modBase + 'mod/' + modName + '/main'], function(ModClass) {
-            var e, error;
+        loadMod = function(modName, contentDom, params) {
+          return require([_opt.modBase + modName + '/main'], function(ModClass) {
+            var e;
             if (viewId === _viewId && !_modCache[modName]) {
               try {
-                return modInst = _modCache[modName] = new ModClass(mark, modName, contentDom, args, opt.modOpt);
+                modInst = _modCache[modName] = new ModClass(mark, modName, contentDom, params, opt.modOpt);
+                return modInst.render();
               } catch (error) {
                 e = error;
                 if (typeof console !== "undefined" && console !== null) {
@@ -520,15 +582,15 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
           contentDom = $(_opt.initContentDom);
           contentDom.attr('data-mod-name', modName);
           _opt.initContentDom = null;
-          loadMod(modName, contentDom, args);
+          loadMod(modName, contentDom, params);
         } else {
           if (_opt.initContentDom) {
             $(_opt.initContentDom).remove();
             _opt.initContentDom = null;
           }
-          contentDom = _constructContentDom(modName, args, opt.modOpt);
+          contentDom = _constructContentDom(modName, params, opt.modOpt);
           core.fadeIn(null, contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, pModInst != null ? pModInst.fadeOut(modName) : void 0, function() {
-            return loadMod(modName, contentDom, args);
+            return loadMod(modName, contentDom, params);
           });
         }
       }
@@ -539,19 +601,13 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
       }
     },
     load: function(mark, opt, onLoad) {
-      var args, contentDom, extArgs, loadId, loadMod, modInst, modName, tmp, viewId;
+      var contentDom, loadId, loadMod, markParts, modInst, modName, params, viewId;
       mark = _trimSlash(mark);
       opt = opt || {};
-      extArgs = opt.args || [];
-      tmp = mark.split(_ARGS_SEPARATOR);
-      args = tmp[1] && tmp[1].split('/') || [];
-      $.each(extArgs, function(i, arg) {
-        if (arg) {
-          return args[i] = arg;
-        }
-      });
+      markParts = mark.split('?');
+      params = $.extend(_getParamsObj(markParts[1]), _getParamsObj(opt.params));
       if (mark.indexOf(_opt.modPrefix + '/') === 0) {
-        modName = _trimSlash(tmp[0].replace(_opt.modPrefix, ''));
+        modName = _trimSlash(markParts[0].replace(_opt.modPrefix, ''));
       }
       modName = modName || _opt.defaultModName;
       modInst = _modCache[modName];
@@ -560,7 +616,7 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
       }
       viewId = _viewId;
       loadId = _loadId;
-      if (modName === _currentModName || modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (_opt.alwaysUseCache || modInst.alwaysUseCache) && modInst.getArgs().join('/') === args.join('/')) {
+      if (modName === _currentModName || modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (_opt.alwaysUseCache || modInst.alwaysUseCache) && _isSameParams(modInst.getParams(), params)) {
         return typeof onLoad === "function" ? onLoad() : void 0;
       } else {
         core.removeCache(modName);
@@ -568,16 +624,17 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
           modInst.destroy();
         }
         $('[data-sb-mod="' + modName + '"]', _container).remove();
-        loadMod = function(modName, contentDom, args) {
-          return require([_opt.modBase + 'mod/' + modName + '/main'], function(ModClass) {
-            var e, error;
+        loadMod = function(modName, contentDom, params) {
+          return require([_opt.modBase + modName + '/main'], function(ModClass) {
+            var e;
             if (viewId === _viewId && loadId === _loadId && !_modCache[modName]) {
               try {
-                return modInst = _modCache[modName] = new ModClass(mark, modName, contentDom, args, opt.modOpt, function() {
+                modInst = _modCache[modName] = new ModClass(mark, modName, contentDom, params, opt.modOpt, function() {
                   if (viewId === _viewId && loadId === _loadId) {
                     return typeof onLoad === "function" ? onLoad() : void 0;
                   }
                 });
+                return modInst.render();
               } catch (error) {
                 e = error;
                 contentDom.remove();
@@ -610,19 +667,19 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
             }
           });
         };
-        contentDom = _constructContentDom(modName, args, opt.modOpt);
-        return loadMod(modName, contentDom, args);
+        contentDom = _constructContentDom(modName, params, opt.modOpt);
+        return loadMod(modName, contentDom, params);
       }
     },
-    back: function(modName, args) {
+    back: function(modName, paramsStr) {
       var mark, modInst;
       modName = _trimSlash(modName);
-      args = _trimSlash(args);
+      paramsStr = _getParamsStr(paramsStr);
       if (modName) {
         modInst = _modCache[modName];
         if (modInst) {
-          if (args) {
-            mark = _opt.modPrefix + '/' + modName + _ARGS_SEPARATOR + args;
+          if (paramsStr) {
+            mark = _opt.modPrefix + '/' + modName + '?' + paramsStr;
             if (mark === modInst.getMark()) {
               return core.view(mark, {
                 from: 'history'
@@ -638,8 +695,8 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
             });
           }
         } else {
-          if (args) {
-            mark = _opt.modPrefix + '/' + modName + _ARGS_SEPARATOR + args;
+          if (paramsStr) {
+            mark = _opt.modPrefix + '/' + modName + '?' + paramsStr;
           } else {
             mark = _opt.modPrefix + '/' + modName;
           }
@@ -822,16 +879,15 @@ define('./skateboardjs/ajax-history', ['require', 'exports', 'module', 'jquery']
 
 define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './core'], function(require, exports, module) {
 (function() {
-  var $, BaseMod, core;
+  var $, BaseMod, core,
+    hasProp = {}.hasOwnProperty;
 
   $ = require('jquery');
 
   core = require('./core');
 
   BaseMod = (function() {
-    var viewed;
-
-    function BaseMod(mark, modName, contentDom, args, opt, onFirstRender) {
+    function BaseMod(mark, modName, contentDom, params, opt, onFirstRender) {
       this._mark = mark;
       this._modName = modName;
       if (!contentDom) {
@@ -839,19 +895,15 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
       }
       this._contentDom = contentDom;
       this._bindEvents();
-      this._args = args || [];
+      this._params = params || {};
       this._opt = opt || {};
       this._onFirstRender = onFirstRender;
-      this._argMap = this._getArgMap(this._args);
       this.init();
-      this.render();
     }
 
-    viewed = false;
+    BaseMod.prototype.viewed = false;
 
     BaseMod.prototype.showNavTab = false;
-
-    BaseMod.prototype.argsPattern = '';
 
     BaseMod.prototype.navTab = '';
 
@@ -861,38 +913,38 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
       'home': 1
     };
 
+    BaseMod.prototype.headerTpl = '';
+
+    BaseMod.prototype.bodyTpl = '';
+
+    BaseMod.prototype.fixedFooterTpl = '';
+
+    BaseMod.prototype.ReactComponent = null;
+
     BaseMod.prototype._bindEvents = function() {
-      return $.each(this.events, (function(_this) {
-        return function(k, v) {
-          k = k.split(' ');
-          return _this._contentDom.on(k.shift(), k.join(' '), _this[v]);
-        };
-      })(this));
+      var k, ref, results, v;
+      ref = this.events;
+      results = [];
+      for (k in ref) {
+        if (!hasProp.call(ref, k)) continue;
+        v = ref[k];
+        k = k.split(' ');
+        results.push(this._contentDom.on(k.shift(), k.join(' '), this[v]));
+      }
+      return results;
     };
 
     BaseMod.prototype._unbindEvents = function() {
-      return $.each(this.events, (function(_this) {
-        return function(k, v) {
-          k = k.split(' ');
-          return _this._contentDom.off(k.shift(), k.join(' '), _this[v]);
-        };
-      })(this));
-    };
-
-    BaseMod.prototype._getArgMap = function(args) {
-      var i, j, key, keys, len, res;
-      res = {};
-      if (this.argsPattern) {
-        args = this._args;
-        keys = this.argsPattern.replace(/^\/+/, '').split('/');
-        for (i = j = 0, len = keys.length; j < len; i = ++j) {
-          key = keys[i];
-          if (key) {
-            res[key] = args[i] || '';
-          }
-        }
+      var k, ref, results, v;
+      ref = this.events;
+      results = [];
+      for (k in ref) {
+        if (!hasProp.call(ref, k)) continue;
+        v = ref[k];
+        k = k.split(' ');
+        results.push(this._contentDom.off(k.shift(), k.join(' '), this[v]));
       }
-      return res;
+      return results;
     };
 
     BaseMod.prototype._ifNotCachable = function(relModName, callback, elseCallback) {
@@ -952,7 +1004,7 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
         if (typeof data === 'string') {
           return $('> .sb-mod__header', this._contentDom).html(data);
         } else {
-          return $('> .sb-mod__header', this._contentDom).html(this._headerTpl.render(data));
+          return $('> .sb-mod__header', this._contentDom).html(this.headerTpl.render(data));
         }
       }
     };
@@ -962,7 +1014,7 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
         if (typeof data === 'string') {
           return $('> .sb-mod__body', this._contentDom).html(data);
         } else {
-          return $('> .sb-mod__body', this._contentDom).html(this._bodyTpl.render(data));
+          return $('> .sb-mod__body', this._contentDom).html(this.bodyTpl.render(data));
         }
       }
     };
@@ -972,7 +1024,7 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
         if (typeof data === 'string') {
           return $('> .sb-mod__fixed-footer', this._contentDom).html(data).show();
         } else {
-          return $('> .sb-mod__fixed-footer', this._contentDom).html(this._fixedFooterTpl.render(data)).show();
+          return $('> .sb-mod__fixed-footer', this._contentDom).html(this.fixedFooterTpl.render(data)).show();
         }
       }
     };
@@ -992,23 +1044,37 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
     };
 
     BaseMod.prototype.render = function() {
-      if (this._headerTpl) {
-        this._renderHeader({
-          args: this._args,
-          opt: this._opt
+      var container, ele, react;
+      if (this.ReactComponent) {
+        react = core.getReact();
+        ele = react.createElement.call(react.React, this.ReactComponent, {
+          route: {
+            path: this._modName,
+            params: this._params
+          }
         });
-      }
-      if (this._bodyTpl) {
-        this._renderBody({
-          args: this._args,
-          opt: this._opt
-        });
-      }
-      if (this._fixedFooterTpl) {
-        this._renderFixedFooter({
-          args: this._args,
-          opt: this._opt
-        });
+        container = this._contentDom[0];
+        container.innerHTML = '';
+        react.render.call(react.ReactDOM, ele, container);
+      } else {
+        if (this.headerTpl) {
+          this._renderHeader({
+            params: this._params,
+            opt: this._opt
+          });
+        }
+        if (this.bodyTpl) {
+          this._renderBody({
+            params: this._params,
+            opt: this._opt
+          });
+        }
+        if (this.fixedFooterTpl) {
+          this._renderFixedFooter({
+            params: this._params,
+            opt: this._opt
+          });
+        }
       }
       return this._onRender();
     };
@@ -1027,40 +1093,14 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
       return this._modName;
     };
 
-    BaseMod.prototype.getArgs = function() {
-      return this._args;
+    BaseMod.prototype.getParams = function() {
+      return this._params;
     };
 
-    BaseMod.prototype.getArgMap = function() {
-      return this._argMap;
-    };
-
-    BaseMod.prototype.getMarkWithArgs = function(args) {
-      return 'view/' + this._modName + '/-/' + args.join('/');
-    };
-
-    BaseMod.prototype.getMarkWithArgMap = function(argMap) {
-      var i, j, key, keys, len;
-      if (argMap == null) {
-        argMap = {};
-      }
-      keys = this.argsPattern.replace(/^\/+/, '').split('/');
-      for (i = j = 0, len = keys.length; j < len; i = ++j) {
-        key = keys[i];
-        keys[i] = argMap[key] || '';
-      }
-      if (keys.length) {
-        return 'view/' + this._modName + '/-/' + keys.join('/');
-      } else {
-        return 'view/' + this._modName;
-      }
-    };
-
-    BaseMod.prototype.update = function(mark, args, opt) {
+    BaseMod.prototype.update = function(mark, params, opt) {
       this._mark = mark;
-      this._args = args || this._args;
+      this._params = params || this._params;
       this._opt = opt || this._opt;
-      this._argMap = this._getArgMap(this._args);
       return this.refresh();
     };
 
@@ -1084,6 +1124,7 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
       if (!res) {
         ref = this.parentModNames;
         for (k in ref) {
+          if (!hasProp.call(ref, k)) continue;
           v = ref[k];
           res = modName === k || k.indexOf(modName + '/') === 0;
           if (res) {
@@ -1137,8 +1178,15 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
     };
 
     BaseMod.prototype.destroy = function() {
+      var react;
       core.removeCache(this._modName);
       this._unbindEvents();
+      if (this.ReactComponent) {
+        react = core.getReact();
+        if (react.unmountComponentAtNode) {
+          react.unmountComponentAtNode.call(react.ReactDOM, this._contentDom[0]);
+        }
+      }
       this._contentDom.remove();
       return this._contentDom = null;
     };

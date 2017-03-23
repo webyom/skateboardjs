@@ -13,8 +13,6 @@ _container = $(document.body)
 _viewId = 0
 _loadId = 0
 
-_ARGS_SEPARATOR = '/-/'
-
 _cssProps = (->
 	el = document.createElement 'div'
 	props =
@@ -34,6 +32,35 @@ _trimSlash = (str) ->
 		str.replace /^\/+|\/+$/g, ''
 	else
 		''
+
+_getParamsStr = (params) ->
+	if not params
+		''
+	else
+		type = typeof params
+		if type is 'string'
+			params
+		else
+			tmp = []
+			for own key, val of params
+				tmp.push "#{key}=#{val}" if typeof val is 'string'
+			tmp.join '&'
+
+_getParamsObj = (paramsStr) ->
+	params = {}
+	if paramsStr
+		type = typeof paramsStr
+		if type is 'string'
+			for tmp in paramsStr.split '&'
+				tmp = tmp.split '='
+				params[tmp[0]] = tmp[1]
+		else
+			for own key, val of paramsStr
+				params[key] = val if typeof val is 'string'
+	params
+
+_isSameParams = (params1, params2) ->
+	_getParamsStr(params1) is _getParamsStr(params2)
 
 _switchNavTab = (modInst) ->
 	if _opt.switchNavTab
@@ -58,15 +85,15 @@ _onAfterViewChange = (modName, modInst) ->
 			bodyClassName = bodyClassName + ' sb-show-nav'
 		document.body.className = bodyClassName
 
-_constructContentDom = (modName, args, opt) ->
+_constructContentDom = (modName, params = {}, opt) ->
 	if _opt.constructContentDom
-		contentDom = _opt.constructContentDom modName, args, opt
+		contentDom = _opt.constructContentDom modName, params, opt
 	else
-		titleTpl = require _opt.modBase + 'mod/' + modName + '/title.tpl.html'
+		titleTpl = require _opt.modBase + modName + '/title.tpl.html'
 		contentDom = $([
 			'<div class="sb-mod sb-mod--' + modName.replace(/\//g, '-') + '" data-sb-mod="' + modName + '" data-sb-scene="0">'
 				'<header class="sb-mod__header">'
-					if titleTpl then titleTpl.render({args: args, opt: opt}) else '<h1 class="title"></h1>'
+					if titleTpl then titleTpl.render({params: params, opt: opt}) else '<h1 class="title"></h1>'
 				'</header>'
 				'<div class="sb-mod__body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">'
 					'<div class="sb-mod__body__msg" data-sb-mod-not-renderred>'
@@ -99,9 +126,10 @@ _init = ->
 				return
 			if mark?.indexOf(':back') is 0
 				e.preventDefault()
-				tmp = mark.split _ARGS_SEPARATOR
+				tmp = mark.split ':back:'
 				if tmp.length > 1
-					core.back tmp[1], tmp[2]
+					tmp = tmp[1].split '?'
+					core.back tmp[0], tmp[1]
 				else
 					history.back()
 			else if mark?.indexOf(_opt.modPrefix + '/') is 0
@@ -123,6 +151,16 @@ core = $.extend $({}),
 
 	modCacheable: ->
 		_opt.modCacheable
+
+	getReact: ->
+		if not _opt.react
+			_opt.react = 
+				React: window.React
+				createElement: window.React?.createElement
+				ReactDOM: window.ReactDOM
+				render: window.ReactDOM?.render
+				unmountComponentAtNode: window.ReactDOM?.unmountComponentAtNode
+		_opt.react
 
 	getPreviousModName: () ->
 		_previousModName
@@ -281,7 +319,6 @@ core = $.extend $({}),
 	view: (mark, opt) ->
 		mark = _trimSlash mark
 		opt = opt || {}
-		extArgs = opt.args || []
 		if opt.reload
 			if ajaxHistory.isSupportHistoryState()
 				if location.origin + '/' + mark is location.href
@@ -292,15 +329,12 @@ core = $.extend $({}),
 				ajaxHistory.setMark mark
 				location.reload()
 			return
-		tmp = mark.split _ARGS_SEPARATOR
-		args = tmp[1] && tmp[1].split('/') || []
-		$.each extArgs, (i, arg) ->
-			if arg
-				args[i] = arg
+		markParts = mark.split '?'
+		params = $.extend _getParamsObj(markParts[1]), _getParamsObj(opt.params)
 		pModName = _currentModName
 		pModInst = _modCache[pModName]
 		if mark.indexOf(_opt.modPrefix + '/') is 0
-			modName = _trimSlash tmp[0].replace(_opt.modPrefix, '')
+			modName = _trimSlash markParts[0].replace(_opt.modPrefix, '')
 		modName = modName || _opt.defaultModName
 		modInst = _modCache[modName]
 		_viewChangeInfo =
@@ -311,7 +345,7 @@ core = $.extend $({}),
 			toModName: modName
 			fromMark: _currentMark
 			toMark: mark
-			args: args
+			params: params
 			opt: opt.modOpt
 		return if _opt.onBeforeViewChange?(modName, modInst) is false
 		if mark is _currentMark and modName isnt 'alert'
@@ -330,7 +364,7 @@ core = $.extend $({}),
 		and modInst.isRenderred() \
 		and modName isnt 'alert' \
 		and modName is pModName
-			modInst.update mark, args, opt.modOpt
+			modInst.update mark, params, opt.modOpt
 			_onAfterViewChange modName, modInst
 			core.trigger 'afterViewChange', modInst
 		else if modInst \
@@ -338,7 +372,7 @@ core = $.extend $({}),
 		and modName isnt 'alert' \
 		and not opt.modOpt \
 		and (not modInst.viewed or _viewChangeInfo.from is 'history' or _opt.alwaysUseCache or modInst.alwaysUseCache) \
-		and modInst.getArgs().join('/') is args.join('/')
+		and _isSameParams modInst.getParams(), params
 			modInst.fadeIn pModInst, pModInst?.fadeOut(modName), ->
 				_switchNavTab modInst
 				_onAfterViewChange modName, modInst
@@ -348,11 +382,12 @@ core = $.extend $({}),
 			core.removeCache modName
 			modInst?.destroy()
 			$('[data-sb-mod="' + modName + '"]', _container).remove()
-			loadMod = (modName, contentDom, args) ->
-				require [_opt.modBase + 'mod/' + modName + '/main'], (ModClass) ->
+			loadMod = (modName, contentDom, params) ->
+				require [_opt.modBase + modName + '/main'], (ModClass) ->
 					if viewId is _viewId and not _modCache[modName]
 						try
-							modInst = _modCache[modName] = new ModClass mark, modName, contentDom, args, opt.modOpt
+							modInst = _modCache[modName] = new ModClass mark, modName, contentDom, params, opt.modOpt
+							modInst.render()
 						catch e
 							console?.error? e.stack
 							throw e
@@ -376,27 +411,23 @@ core = $.extend $({}),
 				contentDom = $(_opt.initContentDom)
 				contentDom.attr 'data-mod-name', modName
 				_opt.initContentDom = null
-				loadMod modName, contentDom, args
+				loadMod modName, contentDom, params
 			else
 				if _opt.initContentDom
 					$(_opt.initContentDom).remove()
 					_opt.initContentDom = null
-				contentDom = _constructContentDom(modName, args, opt.modOpt)
+				contentDom = _constructContentDom(modName, params, opt.modOpt)
 				core.fadeIn null, contentDom, pModInst?.hasParent(modName), pModInst?.fadeOut(modName), ->
-					loadMod modName, contentDom, args
+					loadMod modName, contentDom, params
 		ajaxHistory.setMark(mark, replaceState: opt.replaceState) if not opt.holdMark
 
 	load: (mark, opt, onLoad) ->
 		mark = _trimSlash mark
 		opt = opt || {}
-		extArgs = opt.args || []
-		tmp = mark.split _ARGS_SEPARATOR
-		args = tmp[1] && tmp[1].split('/') || []
-		$.each extArgs, (i, arg) ->
-			if arg
-				args[i] = arg
+		markParts = mark.split '?'
+		params = $.extend _getParamsObj(markParts[1]), _getParamsObj(opt.params)
 		if mark.indexOf(_opt.modPrefix + '/') is 0
-			modName = _trimSlash tmp[0].replace(_opt.modPrefix, '')
+			modName = _trimSlash markParts[0].replace(_opt.modPrefix, '')
 		modName = modName || _opt.defaultModName
 		modInst = _modCache[modName]
 		_loadId++ if onLoad
@@ -408,19 +439,20 @@ core = $.extend $({}),
 		and modName isnt 'alert' \
 		and not opt.modOpt \
 		and (_opt.alwaysUseCache or modInst.alwaysUseCache) \
-		and modInst.getArgs().join('/') is args.join('/')
+		and _isSameParams modInst.getParams(), params
 			onLoad?()
 		else
 			core.removeCache modName
 			modInst?.destroy()
 			$('[data-sb-mod="' + modName + '"]', _container).remove()
-			loadMod = (modName, contentDom, args) ->
-				require [_opt.modBase + 'mod/' + modName + '/main'], (ModClass) ->
+			loadMod = (modName, contentDom, params) ->
+				require [_opt.modBase + modName + '/main'], (ModClass) ->
 					if viewId is _viewId and loadId is _loadId and not _modCache[modName]
 						try
-							modInst = _modCache[modName] = new ModClass mark, modName, contentDom, args, opt.modOpt, ->
+							modInst = _modCache[modName] = new ModClass mark, modName, contentDom, params, opt.modOpt, ->
 								if viewId is _viewId and loadId is _loadId
 									onLoad?()
+							modInst.render()
 						catch e
 							contentDom.remove()
 							console?.error? e.stack
@@ -434,17 +466,17 @@ core = $.extend $({}),
 							core.showAlert({type: 'error', subType: 'load_mod_fail', failLoadModName: modName}, {failLoadModName: modName}) if viewId is _viewId and loadId is _loadId
 						else
 							alert 'Failed to load module "' + (opt.failLoadModName || modName) + '"'
-			contentDom = _constructContentDom(modName, args, opt.modOpt)
-			loadMod modName, contentDom, args
+			contentDom = _constructContentDom(modName, params, opt.modOpt)
+			loadMod modName, contentDom, params
 
-	back: (modName, args) ->
+	back: (modName, paramsStr) ->
 		modName = _trimSlash modName
-		args = _trimSlash args
+		paramsStr = _getParamsStr paramsStr
 		if modName
 			modInst = _modCache[modName]
 			if modInst
-				if args
-					mark = _opt.modPrefix + '/' + modName + _ARGS_SEPARATOR + args
+				if paramsStr
+					mark = _opt.modPrefix + '/' + modName + '?' + paramsStr
 					if mark is modInst.getMark()
 						core.view mark, from: 'history'
 					else
@@ -452,8 +484,8 @@ core = $.extend $({}),
 				else
 					core.view modInst.getMark(), from: 'history'
 			else
-				if args
-					mark = _opt.modPrefix + '/' + modName + _ARGS_SEPARATOR + args
+				if paramsStr
+					mark = _opt.modPrefix + '/' + modName + '?' + paramsStr
 				else
 					mark = _opt.modPrefix + '/' + modName
 				core.view mark, from: 'link'
