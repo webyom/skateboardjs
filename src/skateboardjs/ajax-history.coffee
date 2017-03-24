@@ -1,13 +1,10 @@
 $ = require 'jquery'
 
-_markCacheIndexHash = {}
-_cache = []
-_cacheEnabled = true
-_cacheSize = 100
 _previousMark = undefined
 _currentMark = undefined
 _listener = null
 _listenerBind = null
+_exclamationMark = ''
 _isSupportHistoryState = !!history.pushState
 
 _updateCurrentMark = (mark) ->
@@ -21,21 +18,14 @@ _checkMark = () ->
 		_updateCurrentMark mark
 		_listener.call(_listenerBind, mark) if _listener
 
-_setCache = (mark, data) ->
-	if _cacheEnabled
-		delete _cache[_markCacheIndexHash[mark]]
-		_cache.push data
-		_markCacheIndexHash[mark] = _cache.length - 1
-		delete _cache[_markCacheIndexHash[mark] - _cacheSize]
-
 _isValidMark = (mark) ->
 	typeof mark is 'string' and not (/^[#!]/).test mark
 
 init = (opt) ->
 	opt = opt || {}
+	if opt.exclamationMark
+		_exclamationMark = '!'
 	_isSupportHistoryState = if typeof opt.isSupportHistoryState isnt 'undefined' then opt.isSupportHistoryState else _isSupportHistoryState
-	_cacheEnabled = if typeof opt.cacheEnabled isnt 'undefined' then opt.cacheEnabled else _cacheEnabled
-	_cacheSize = opt.cacheSize || _cacheSize
 	if _isSupportHistoryState
 		$(window).on 'popstate', _checkMark
 	else
@@ -47,18 +37,8 @@ setListener = (listener, bind) ->
 	_listener = if typeof listener is 'function' then listener else null
 	_listenerBind = bind || null
 
-setCache = (mark, data) ->
-	if _isValidMark mark
-		_setCache mark, data
-
-getCache = (mark) ->
-	_cache[_markCacheIndexHash[mark]]
-
-clearCache = () ->
-	_markCacheIndexHash = {}
-	_cache = []
-
 setMark = (mark, opt) ->
+	mark = getMark mark
 	opt = opt || {}
 	if opt.title
 		document.title = opt.title
@@ -67,13 +47,15 @@ setMark = (mark, opt) ->
 		if _isSupportHistoryState
 			history[if opt.replaceState then 'replaceState' else 'pushState'](opt.stateObj, opt.title || document.title, '/' + mark)
 		else
-			location.hash = '!' + mark
+			location.hash = _exclamationMark + '/' + mark
 
-getMark = () ->
-	if _isSupportHistoryState
-		location.pathname.replace /^\//, ''
+getMark = (mark) ->
+	if mark
+		mark.replace /^\/+/, ''
+	else if _isSupportHistoryState
+		location.pathname.replace /^\/+/, ''
 	else
-		location.hash.replace /^#!?\/?/, ''
+		location.hash.replace /^#!?\/*/, ''
 
 getPrevMark = () ->
 	_previousMark
@@ -84,9 +66,6 @@ isSupportHistoryState = () ->
 module.exports =
 	init: init
 	setListener: setListener
-	setCache: setCache
-	getCache: getCache
-	clearCache: clearCache
 	setMark: setMark
 	getMark: getMark
 	getPrevMark: getPrevMark

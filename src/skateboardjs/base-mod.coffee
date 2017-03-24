@@ -50,8 +50,8 @@ class BaseMod
 				else
 					elseCallback?()
 			else
-				require ['mod/' + relModName + '/main'], (ModClass) =>
-					relModInst = new ModClass relModName
+				require [core.getModBase() + relModName + '/main'], (com) =>
+					relModInst = new com.Mod relModName, relModName
 					if not relModInst.hasParent @_modName
 						callback?()
 					else
@@ -113,6 +113,8 @@ class BaseMod
 				route:
 					path: @_modName
 					params: @_params
+					opt: @_opt
+				sbModInst: @
 			container = this._contentDom[0]
 			container.innerHTML = ''
 			react.render.call react.ReactDOM, ele, container
@@ -141,6 +143,9 @@ class BaseMod
 
 	getModName: ->
 		@_modName
+
+	getOpt: ->
+		@_opt
 
 	getParams: ->
 		@_params

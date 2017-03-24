@@ -134,8 +134,8 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
       if (typeof tabName === 'function') {
         tabName = tabName();
       }
-      $('nav [data-tab]', _container).removeClass('active');
-      return $('nav [data-tab="' + tabName + '"]', _container).addClass('active');
+      $('app-nav [data-tab]', _container).removeClass('active');
+      return $('app-nav [data-tab="' + tabName + '"]', _container).addClass('active');
     }
   };
 
@@ -167,10 +167,10 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
     } else {
       titleTpl = require(_opt.modBase + modName + '/title.tpl.html');
       contentDom = $([
-        '<div class="sb-mod sb-mod--' + modName.replace(/\//g, '-') + '" data-sb-mod="' + modName + '" data-sb-scene="0">', '<header class="sb-mod__header">', titleTpl ? titleTpl.render({
+        '<div class="sb-mod sb-mod--' + modName.replace(/\//g, '__') + '" data-sb-mod="' + modName + '" data-sb-scene="0">', '<header class="sb-mod__header">', titleTpl ? titleTpl.render({
           params: params,
           opt: opt
-        }) : '<h1 class="title"></h1>', '</header>', '<div class="sb-mod__body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">', '<div class="sb-mod__body__msg" data-sb-mod-not-renderred>', '内容正在赶来，请稍候...', '</div>', '</div>', '<div class="sb-mod__fixed-footer" style="display: none;">', '</div>', '</div>'
+        }) : '<h1 class="title"></h1>', '</header>', '<div class="sb-mod__body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">', '<div class="sb-mod__body__msg" data-sb-mod-not-renderred>', _opt.loadingMsg || '内容正在赶来，请稍候...', '</div>', '</div>', '<div class="sb-mod__fixed-footer" style="display: none;">', '</div>', '</div>'
       ].join('')).prependTo(_container);
     }
     return contentDom;
@@ -190,6 +190,7 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
       });
     });
     ajaxHistory.init({
+      exclamationMark: _opt.exclamationMark,
       isSupportHistoryState: _opt.isSupportHistoryState
     });
     t = new Date();
@@ -249,6 +250,9 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
     },
     modCacheable: function() {
       return _opt.modCacheable;
+    },
+    getModBase: function() {
+      return _opt.modBase;
     },
     getReact: function() {
       var ref, ref1, ref2;
@@ -326,7 +330,7 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
             });
           }
         } else if (animateType === 'slide') {
-          sd = $('[data-slide-direction]', contentDom).data('slide-direction');
+          sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
           if (_cssProps) {
             cssObj = {
               zIndex: '2'
@@ -388,7 +392,7 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
         ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
         duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
         callback = function() {
-          if (contentDom.data('sb-mod') !== _currentModName) {
+          if (contentDom.attr('data-sb-mod') !== _currentModName) {
             contentDom.hide();
           }
           return typeof cb === "function" ? cb() : void 0;
@@ -412,7 +416,7 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
             });
           }
         } else if (animateType === 'slide') {
-          sd = $('[data-slide-direction]', contentDom).data('slide-direction');
+          sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
           zIndex = '1';
           percentage = '100';
           if (((ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0) >= -100) {
@@ -533,12 +537,16 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
         }
         $('[data-sb-mod="' + modName + '"]', _container).remove();
         loadMod = function(modName, contentDom, params) {
-          return require([_opt.modBase + modName + '/main'], function(ModClass) {
+          return require([_opt.modBase + modName + '/main'], function(com) {
             var e;
             if (viewId === _viewId && !_modCache[modName]) {
               try {
-                modInst = _modCache[modName] = new ModClass(mark, modName, contentDom, params, opt.modOpt);
-                return modInst.render();
+                modInst = _modCache[modName] = new com.Mod(mark, modName, contentDom, params, opt.modOpt);
+                modInst.render();
+                if (typeof _opt.onFirstRender === "function") {
+                  _opt.onFirstRender();
+                }
+                return _opt.onFirstRender = null;
               } catch (error) {
                 e = error;
                 if (typeof console !== "undefined" && console !== null) {
@@ -546,7 +554,11 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
                     console.error(e.stack);
                   }
                 }
-                throw e;
+                if (_opt.onInitModFail) {
+                  return _opt.onInitModFail(mark, modName, params, opt.modOpt, 'view', viewId === _viewId);
+                } else {
+                  throw e;
+                }
               } finally {
                 if (modInst) {
                   modInst._afterFadeIn(pModInst);
@@ -561,20 +573,22 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
               return contentDom.remove();
             }
           }, function() {
+            var ref;
             contentDom.remove();
-            if (modName !== 'alert') {
+            if (_opt.onLoadModFail) {
+              return _opt.onLoadModFail(mark, modName, params, opt.modOpt, 'view', viewId === _viewId);
+            } else if (modName !== 'alert') {
               if (viewId === _viewId) {
                 return core.showAlert({
                   type: 'error',
                   subType: 'load_mod_fail',
-                  failLoadModName: modName
+                  relModName: modName
                 }, {
-                  failLoadModName: modName,
                   holdMark: true
                 });
               }
             } else {
-              return alert('Failed to load module "' + (opt.failLoadModName || modName) + '"');
+              return alert('Failed to load module "' + (((ref = opt.modOpt) != null ? ref.relModName : void 0) || '') + '"');
             }
           });
         };
@@ -625,11 +639,11 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
         }
         $('[data-sb-mod="' + modName + '"]', _container).remove();
         loadMod = function(modName, contentDom, params) {
-          return require([_opt.modBase + modName + '/main'], function(ModClass) {
+          return require([_opt.modBase + modName + '/main'], function(com) {
             var e;
             if (viewId === _viewId && loadId === _loadId && !_modCache[modName]) {
               try {
-                modInst = _modCache[modName] = new ModClass(mark, modName, contentDom, params, opt.modOpt, function() {
+                modInst = _modCache[modName] = new com.Mod(mark, modName, contentDom, params, opt.modOpt, function() {
                   if (viewId === _viewId && loadId === _loadId) {
                     return typeof onLoad === "function" ? onLoad() : void 0;
                   }
@@ -643,26 +657,32 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
                     console.error(e.stack);
                   }
                 }
-                throw e;
+                if (_opt.onInitModFail) {
+                  return _opt.onInitModFail(mark, modName, params, opt.modOpt, 'load', viewId === _viewId && loadId === _loadId);
+                } else {
+                  throw e;
+                }
               }
             } else {
               return contentDom.remove();
             }
           }, function() {
+            var ref;
             if (onLoad) {
-              if (modName !== 'alert') {
+              if (_opt.onLoadModFail) {
+                contentDom.remove();
+                return _opt.onLoadModFail(mark, modName, params, opt.modOpt, 'load', viewId === _viewId && loadId === _loadId);
+              } else if (modName !== 'alert') {
                 contentDom.remove();
                 if (viewId === _viewId && loadId === _loadId) {
                   return core.showAlert({
                     type: 'error',
                     subType: 'load_mod_fail',
-                    failLoadModName: modName
-                  }, {
-                    failLoadModName: modName
-                  });
+                    relModName: modName
+                  }, {});
                 }
               } else {
-                return alert('Failed to load module "' + (opt.failLoadModName || modName) + '"');
+                return alert('Failed to load module "' + (((ref = opt.modOpt) != null ? ref.relModName : void 0) || '') + '"');
               }
             }
           });
@@ -731,7 +751,7 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
       };
       viewOpt = viewOpt || {};
       viewOpt.modOpt = opt;
-      return core.view('view/alert/-/' + (new Date().getTime()), viewOpt);
+      return core.view('view/' + (_opt.alertModName || 'alert') + '?t=' + (new Date().getTime()), viewOpt);
     }
   });
 
@@ -743,17 +763,9 @@ define('./skateboardjs/core', ['require', 'exports', 'module', 'jquery', './ajax
 
 define('./skateboardjs/ajax-history', ['require', 'exports', 'module', 'jquery'], function(require, exports, module) {
 (function() {
-  var $, _cache, _cacheEnabled, _cacheSize, _checkMark, _currentMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _markCacheIndexHash, _previousMark, _setCache, _updateCurrentMark, clearCache, getCache, getMark, getPrevMark, init, isSupportHistoryState, setCache, setListener, setMark;
+  var $, _checkMark, _currentMark, _exclamationMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _previousMark, _updateCurrentMark, getMark, getPrevMark, init, isSupportHistoryState, setListener, setMark;
 
   $ = require('jquery');
-
-  _markCacheIndexHash = {};
-
-  _cache = [];
-
-  _cacheEnabled = true;
-
-  _cacheSize = 100;
 
   _previousMark = void 0;
 
@@ -762,6 +774,8 @@ define('./skateboardjs/ajax-history', ['require', 'exports', 'module', 'jquery']
   _listener = null;
 
   _listenerBind = null;
+
+  _exclamationMark = '';
 
   _isSupportHistoryState = !!history.pushState;
 
@@ -783,24 +797,16 @@ define('./skateboardjs/ajax-history', ['require', 'exports', 'module', 'jquery']
     }
   };
 
-  _setCache = function(mark, data) {
-    if (_cacheEnabled) {
-      delete _cache[_markCacheIndexHash[mark]];
-      _cache.push(data);
-      _markCacheIndexHash[mark] = _cache.length - 1;
-      return delete _cache[_markCacheIndexHash[mark] - _cacheSize];
-    }
-  };
-
   _isValidMark = function(mark) {
     return typeof mark === 'string' && !/^[#!]/.test(mark);
   };
 
   init = function(opt) {
     opt = opt || {};
+    if (opt.exclamationMark) {
+      _exclamationMark = '!';
+    }
     _isSupportHistoryState = typeof opt.isSupportHistoryState !== 'undefined' ? opt.isSupportHistoryState : _isSupportHistoryState;
-    _cacheEnabled = typeof opt.cacheEnabled !== 'undefined' ? opt.cacheEnabled : _cacheEnabled;
-    _cacheSize = opt.cacheSize || _cacheSize;
     if (_isSupportHistoryState) {
       $(window).on('popstate', _checkMark);
     } else {
@@ -815,22 +821,8 @@ define('./skateboardjs/ajax-history', ['require', 'exports', 'module', 'jquery']
     return _listenerBind = bind || null;
   };
 
-  setCache = function(mark, data) {
-    if (_isValidMark(mark)) {
-      return _setCache(mark, data);
-    }
-  };
-
-  getCache = function(mark) {
-    return _cache[_markCacheIndexHash[mark]];
-  };
-
-  clearCache = function() {
-    _markCacheIndexHash = {};
-    return _cache = [];
-  };
-
   setMark = function(mark, opt) {
+    mark = getMark(mark);
     opt = opt || {};
     if (opt.title) {
       document.title = opt.title;
@@ -840,16 +832,18 @@ define('./skateboardjs/ajax-history', ['require', 'exports', 'module', 'jquery']
       if (_isSupportHistoryState) {
         return history[opt.replaceState ? 'replaceState' : 'pushState'](opt.stateObj, opt.title || document.title, '/' + mark);
       } else {
-        return location.hash = '!' + mark;
+        return location.hash = _exclamationMark + '/' + mark;
       }
     }
   };
 
-  getMark = function() {
-    if (_isSupportHistoryState) {
-      return location.pathname.replace(/^\//, '');
+  getMark = function(mark) {
+    if (mark) {
+      return mark.replace(/^\/+/, '');
+    } else if (_isSupportHistoryState) {
+      return location.pathname.replace(/^\/+/, '');
     } else {
-      return location.hash.replace(/^#!?\/?/, '');
+      return location.hash.replace(/^#!?\/*/, '');
     }
   };
 
@@ -864,9 +858,6 @@ define('./skateboardjs/ajax-history', ['require', 'exports', 'module', 'jquery']
   module.exports = {
     init: init,
     setListener: setListener,
-    setCache: setCache,
-    getCache: getCache,
-    clearCache: clearCache,
     setMark: setMark,
     getMark: getMark,
     getPrevMark: getPrevMark,
@@ -965,9 +956,9 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
             return typeof elseCallback === "function" ? elseCallback() : void 0;
           }
         } else {
-          return require(['mod/' + relModName + '/main'], (function(_this) {
-            return function(ModClass) {
-              relModInst = new ModClass(relModName);
+          return require([core.getModBase() + relModName + '/main'], (function(_this) {
+            return function(com) {
+              relModInst = new com.Mod(relModName, relModName);
               if (!relModInst.hasParent(_this._modName)) {
                 return typeof callback === "function" ? callback() : void 0;
               } else {
@@ -1050,8 +1041,10 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
         ele = react.createElement.call(react.React, this.ReactComponent, {
           route: {
             path: this._modName,
-            params: this._params
-          }
+            params: this._params,
+            opt: this._opt
+          },
+          sbModInst: this
         });
         container = this._contentDom[0];
         container.innerHTML = '';
@@ -1091,6 +1084,10 @@ define('./skateboardjs/base-mod', ['require', 'exports', 'module', 'jquery', './
 
     BaseMod.prototype.getModName = function() {
       return this._modName;
+    };
+
+    BaseMod.prototype.getOpt = function() {
+      return this._opt;
     };
 
     BaseMod.prototype.getParams = function() {

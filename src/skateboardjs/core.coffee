@@ -69,8 +69,8 @@ _switchNavTab = (modInst) ->
 		tabName = modInst.navTab
 		if typeof tabName is 'function'
 			tabName = tabName()
-		$('nav [data-tab]', _container).removeClass 'active'
-		$('nav [data-tab="' + tabName + '"]', _container).addClass 'active'
+		$('app-nav [data-tab]', _container).removeClass 'active'
+		$('app-nav [data-tab="' + tabName + '"]', _container).addClass 'active'
 
 _onAfterViewChange = (modName, modInst) ->
 	if _opt.onAfterViewChange
@@ -91,13 +91,13 @@ _constructContentDom = (modName, params = {}, opt) ->
 	else
 		titleTpl = require _opt.modBase + modName + '/title.tpl.html'
 		contentDom = $([
-			'<div class="sb-mod sb-mod--' + modName.replace(/\//g, '-') + '" data-sb-mod="' + modName + '" data-sb-scene="0">'
+			'<div class="sb-mod sb-mod--' + modName.replace(/\//g, '__') + '" data-sb-mod="' + modName + '" data-sb-scene="0">'
 				'<header class="sb-mod__header">'
 					if titleTpl then titleTpl.render({params: params, opt: opt}) else '<h1 class="title"></h1>'
 				'</header>'
 				'<div class="sb-mod__body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">'
 					'<div class="sb-mod__body__msg" data-sb-mod-not-renderred>'
-						'内容正在赶来，请稍候...'
+						_opt.loadingMsg || '内容正在赶来，请稍候...'
 					'</div>'
 				'</div>'
 				'<div class="sb-mod__fixed-footer" style="display: none;">'
@@ -112,6 +112,7 @@ _init = ->
 	ajaxHistory.setListener (mark) ->
 		core.view mark, from: 'history'
 	ajaxHistory.init
+		exclamationMark: _opt.exclamationMark
 		isSupportHistoryState: _opt.isSupportHistoryState
 	t = new Date()
 	$(document.body).on 'click', (e) ->
@@ -151,6 +152,9 @@ core = $.extend $({}),
 
 	modCacheable: ->
 		_opt.modCacheable
+
+	getModBase: ->
+		_opt.modBase
 
 	getReact: ->
 		if not _opt.react
@@ -213,7 +217,7 @@ core = $.extend $({}),
 							opacity: '1'
 						, duration, ttf, callback
 			else if animateType is 'slide'
-				sd = $('[data-slide-direction]', contentDom).data 'slide-direction'
+				sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
 				if _cssProps
 					cssObj =
 						zIndex: '2'
@@ -262,7 +266,7 @@ core = $.extend $({}),
 			ttf = _opt.animate?.timingFunction || 'linear'
 			duration = _opt.animate?.duration || 300
 			callback = ->
-				contentDom.hide() if contentDom.data('sb-mod') isnt _currentModName
+				contentDom.hide() if contentDom.attr('data-sb-mod') isnt _currentModName
 				cb?()
 			if animateType is 'fade'
 				if _cssProps
@@ -279,7 +283,7 @@ core = $.extend $({}),
 							opacity: '0'
 						, duration, ttf, callback
 			else if animateType is 'slide'
-				sd = $('[data-slide-direction]', contentDom).data 'slide-direction'
+				sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
 				zIndex = '1'
 				percentage = '100'
 				if _opt.animate?.slideOutPercent >= -100
@@ -383,14 +387,19 @@ core = $.extend $({}),
 			modInst?.destroy()
 			$('[data-sb-mod="' + modName + '"]', _container).remove()
 			loadMod = (modName, contentDom, params) ->
-				require [_opt.modBase + modName + '/main'], (ModClass) ->
+				require [_opt.modBase + modName + '/main'], (com) ->
 					if viewId is _viewId and not _modCache[modName]
 						try
-							modInst = _modCache[modName] = new ModClass mark, modName, contentDom, params, opt.modOpt
+							modInst = _modCache[modName] = new com.Mod mark, modName, contentDom, params, opt.modOpt
 							modInst.render()
+							_opt.onFirstRender?()
+							_opt.onFirstRender = null
 						catch e
 							console?.error? e.stack
-							throw e
+							if _opt.onInitModFail
+								_opt.onInitModFail mark, modName, params, opt.modOpt, 'view', viewId is _viewId
+							else
+								throw e
 						finally
 							if modInst
 								modInst._afterFadeIn pModInst
@@ -403,10 +412,12 @@ core = $.extend $({}),
 						contentDom.remove()
 				, ->
 					contentDom.remove()
-					if modName isnt 'alert'
-						core.showAlert({type: 'error', subType: 'load_mod_fail', failLoadModName: modName}, {failLoadModName: modName, holdMark: true}) if viewId is _viewId
+					if _opt.onLoadModFail
+						_opt.onLoadModFail mark, modName, params, opt.modOpt, 'view', viewId is _viewId
+					else if modName isnt 'alert'
+						core.showAlert({type: 'error', subType: 'load_mod_fail', relModName: modName}, {holdMark: true}) if viewId is _viewId
 					else
-						alert 'Failed to load module "' + (opt.failLoadModName || modName) + '"'
+						alert 'Failed to load module "' + (opt.modOpt?.relModName || '') + '"'
 			if _opt.initContentDom and modName is _opt.defaultModName
 				contentDom = $(_opt.initContentDom)
 				contentDom.attr 'data-mod-name', modName
@@ -446,26 +457,32 @@ core = $.extend $({}),
 			modInst?.destroy()
 			$('[data-sb-mod="' + modName + '"]', _container).remove()
 			loadMod = (modName, contentDom, params) ->
-				require [_opt.modBase + modName + '/main'], (ModClass) ->
+				require [_opt.modBase + modName + '/main'], (com) ->
 					if viewId is _viewId and loadId is _loadId and not _modCache[modName]
 						try
-							modInst = _modCache[modName] = new ModClass mark, modName, contentDom, params, opt.modOpt, ->
+							modInst = _modCache[modName] = new com.Mod mark, modName, contentDom, params, opt.modOpt, ->
 								if viewId is _viewId and loadId is _loadId
 									onLoad?()
 							modInst.render()
 						catch e
 							contentDom.remove()
 							console?.error? e.stack
-							throw e
+							if _opt.onInitModFail
+								_opt.onInitModFail mark, modName, params, opt.modOpt, 'load', viewId is _viewId and loadId is _loadId
+							else
+								throw e
 					else
 						contentDom.remove()
 				, ->
 					if onLoad
-						if modName isnt 'alert'
+						if _opt.onLoadModFail
 							contentDom.remove()
-							core.showAlert({type: 'error', subType: 'load_mod_fail', failLoadModName: modName}, {failLoadModName: modName}) if viewId is _viewId and loadId is _loadId
+							_opt.onLoadModFail mark, modName, params, opt.modOpt, 'load', viewId is _viewId and loadId is _loadId
+						else if modName isnt 'alert'
+							contentDom.remove()
+							core.showAlert({type: 'error', subType: 'load_mod_fail', relModName: modName}, {}) if viewId is _viewId and loadId is _loadId
 						else
-							alert 'Failed to load module "' + (opt.failLoadModName || modName) + '"'
+							alert 'Failed to load module "' + (opt.modOpt?.relModName || '') + '"'
 			contentDom = _constructContentDom(modName, params, opt.modOpt)
 			loadMod modName, contentDom, params
 
@@ -510,6 +527,6 @@ core = $.extend $({}),
 		opt = opt || {type: 'error'}
 		viewOpt = viewOpt || {}
 		viewOpt.modOpt = opt
-		core.view 'view/alert/-/' + (new Date().getTime()), viewOpt
+		core.view 'view/' + (_opt.alertModName || 'alert') + '?t=' + (new Date().getTime()), viewOpt
 
 module.exports = core
