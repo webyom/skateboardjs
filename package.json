@@ -1,8 +1,11 @@
 {
   "name": "skateboardjs",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A lightweight SPA framework",
   "main": "dist/main.js",
+  "scripts": {
+    "build": "./node_modules/.bin/webpack"
+  },
   "keywords": [
     "SPA",
     "Framework"
@@ -29,12 +32,9 @@
   "engines": {
     "node": ">= 0.8.0"
   },
-  "scripts": {
-  },
   "dependencies": {},
   "devDependencies": {
-    "coffee-script": "^1.7.1",
-    "gulp": "^3.8.5",
-    "gulp-amd-bundler": "^0.1.25"
+    "coffee-loader": "^0.7.3",
+    "webpack": "^2.3.1"
   }
 }

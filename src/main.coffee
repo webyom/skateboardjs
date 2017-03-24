@@ -1,7 +1,6 @@
-core = require './skateboardjs/core'
-BaseMod = require './skateboardjs/base-mod'
+core = require './skateboardjs/core.coffee'
+BaseMod = require './skateboardjs/base-mod.coffee'
 
 module.exports =
-	version: '0.2.9'
-	core: core
-	BaseMod: BaseMod
+  core: core
+  BaseMod: BaseMod
