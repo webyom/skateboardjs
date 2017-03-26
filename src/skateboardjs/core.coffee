@@ -486,6 +486,8 @@ core = $.extend $({}),
       loadMod modName, contentDom, params
 
   back: (modName, paramsStr) ->
+    if modName.indexOf(_opt.modPrefix + '/') is 0
+      modName = modName.replace _opt.modPrefix, ''
     modName = _trimSlash modName
     paramsStr = _getParamsStr paramsStr
     if modName

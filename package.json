@@ -1,6 +1,6 @@
 {
   "name": "skateboardjs",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A lightweight SPA framework",
   "main": "dist/main.js",
   "scripts": {
