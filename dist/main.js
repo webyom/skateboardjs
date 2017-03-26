@@ -756,6 +756,9 @@ core = $.extend($({}), {
   back: function(modName, paramsStr) {
     var mark, modInst;
     modName = _trimSlash(modName);
+    if (modName.indexOf(_opt.modPrefix + '/') === 0) {
+      modName = _trimSlash(modName.replace(_opt.modPrefix, ''));
+    }
     paramsStr = _getParamsStr(paramsStr);
     if (modName) {
       modInst = _modCache[modName];
