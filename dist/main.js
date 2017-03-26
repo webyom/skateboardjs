@@ -265,7 +265,10 @@ _init = function() {
       el = $(el).closest('a')[0];
     }
     if (el && el.tagName === 'A') {
-      mark = (ref = el.pathname) != null ? ref.replace(/^\/+/, '') : void 0;
+      mark = ((ref = el.pathname) != null ? ref.replace(/^\/+/, '') : void 0) || '';
+      if (el.search) {
+        mark += el.search;
+      }
       if (el.target) {
         return;
       }

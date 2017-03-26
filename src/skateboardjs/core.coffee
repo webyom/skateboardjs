@@ -121,7 +121,8 @@ _init = ->
     if el.tagName isnt 'A'
       el = $(el).closest('a')[0]
     if el and el.tagName is 'A'
-      mark = el.pathname?.replace /^\/+/, ''
+      mark = el.pathname?.replace(/^\/+/, '') || ''
+      mark += el.search if el.search
       if el.target
         return
       if mark?.indexOf(':back') is 0
