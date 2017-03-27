@@ -89,10 +89,11 @@ _constructContentDom = (modName, params = {}, opt) ->
   if _opt.constructContentDom
     contentDom = _opt.constructContentDom modName, params, opt
   else
+    titleTpl = window.require _opt.modBase + modName + '/title.tpl.html'
     contentDom = $([
       '<div class="sb-mod sb-mod--' + modName.replace(/\//g, '__') + '" data-sb-mod="' + modName + '" data-sb-scene="0">'
         '<header class="sb-mod__header">'
-          '<h1 class="title"></h1>'
+          if titleTpl then titleTpl.render({params: params, opt: opt}) else '<h1 class="title"></h1>'
         '</header>'
         '<div class="sb-mod__body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">'
           '<div class="sb-mod__body__msg" data-sb-mod-not-renderred>'
@@ -178,10 +179,11 @@ core = $.extend $({}),
   removeCache: (modName) ->
     _modCache[modName] = null
 
-  fadeIn: (modInst, contentDom, backToParent, animateType, cb) ->
+  fadeIn: (modInst, contentDom, toParentMod, from, animateType, cb) ->
+    fromHistory = from is 'history'
     _opt.onBeforeFadeIn? modInst
     if _opt.fadeIn
-      _opt.fadeIn modInst, contentDom, backToParent, animateType, cb
+      _opt.fadeIn modInst, contentDom, toParentMod, from, animateType, cb
     else
       res = ''
       animateType = animateType || _opt.animate?.type
@@ -192,7 +194,7 @@ core = $.extend $({}),
           $('.sb-mod').css
             zIndex: '0'
           contentDom.css
-            zIndex: '2'
+            zIndex: '3'
         cb?()
       if animateType in ['fade', 'fadeIn']
         if _cssProps
@@ -218,14 +220,16 @@ core = $.extend $({}),
             , duration, ttf, callback
       else if animateType is 'slide'
         sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
+        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent), 100
         if _cssProps
-          cssObj =
-            zIndex: '2'
+          cssObj = {}
           cssObj[_cssProps[1]] = 'none'
           if sd in ['vu', 'vd']
+            cssObj.zIndex = '3'
             cssObj[_cssProps[2]] = 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
           else
-            cssObj[_cssProps[2]] = 'translate3d(' + (if backToParent then '-' else '') + '100%, 0, 0)'
+            cssObj.zIndex = if fromHistory then '1' else '3'
+            cssObj[_cssProps[2]] = 'translate3d(' + (if fromHistory then ('-' + percentage) else '100') + '%, 0, 0)'
           contentDom.css(cssObj).show()
           contentDom[0].offsetTop
           _requestAnimationFrame ->
@@ -237,13 +241,13 @@ core = $.extend $({}),
         else
           if sd in ['vu', 'vd']
             contentDom.css
-              zIndex: '2'
+              zIndex: '3'
               left: '0'
               top: (if sd is 'vd' then '-' else '') + '100%'
           else
             contentDom.css
-              zIndex: '2'
-              left: (if backToParent then '-' else '') + '100%'
+              zIndex: if fromHistory then '1' else '3'
+              left: (if fromHistory then ('-' + percentage) else '100') + '%'
               top: '0'
           contentDom.show()
           _requestAnimationFrame ->
@@ -256,10 +260,11 @@ core = $.extend $({}),
         callback()
       res
 
-  fadeOut: (modInst, contentDom, backToParent, animateType, cb) ->
+  fadeOut: (modInst, contentDom, toParentMod, from, animateType, cb) ->
+    fromHistory = from is 'history'
     _opt.onBeforeFadeOut? modInst
     if _opt.fadeOut
-      _opt.fadeOut modInst, contentDom, backToParent, animateType, cb
+      _opt.fadeOut modInst, contentDom, toParentMod, from, animateType, cb
     else
       res = ''
       animateType = animateType || _opt.animate?.type
@@ -284,13 +289,11 @@ core = $.extend $({}),
             , duration, ttf, callback
       else if animateType is 'slide'
         sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
-        zIndex = '1'
-        percentage = '100'
-        if _opt.animate?.slideOutPercent >= -100
-          percentage = parseInt _opt.animate?.slideOutPercent
+        zIndex = '2'
+        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent), 100
         if sd in ['vu', 'vd']
           res = 'fade'
-          zIndex = '3'
+          zIndex = '4'
         if _cssProps
           _requestAnimationFrame ->
             cssObj =
@@ -299,7 +302,7 @@ core = $.extend $({}),
             if sd in ['vu', 'vd']
               cssObj[_cssProps[2]] = 'translate3d(0, ' + (if sd is 'vd' then -100 else 100) + '%, 0)'
             else
-              cssObj[_cssProps[2]] = 'translate3d(' + (if backToParent then percentage else -percentage) + '%, 0, 0)'
+              cssObj[_cssProps[2]] = 'translate3d(' + (if fromHistory then '100' else ('-' + percentage)) + '%, 0, 0)'
             contentDom.one _cssProps[0], callback
             contentDom.css cssObj
         else
@@ -314,7 +317,7 @@ core = $.extend $({}),
               , duration, ttf, callback
             else
               contentDom.animate
-                left: (if backToParent then percentage else -percentage) + '%'
+                left: (if fromHistory then '100' else ('-' + percentage)) + '%'
               , duration, ttf, callback
       else
         callback()
@@ -377,7 +380,7 @@ core = $.extend $({}),
     and not opt.modOpt \
     and (not modInst.viewed or _viewChangeInfo.from is 'history' or _opt.alwaysUseCache or modInst.alwaysUseCache) \
     and _isSameParams modInst.getParams(), params
-      modInst.fadeIn pModInst, pModInst?.fadeOut(modName), ->
+      modInst.fadeIn pModInst, opt.from, pModInst?.fadeOut(modName, opt.from), ->
         _switchNavTab modInst
         _onAfterViewChange modName, modInst
         core.trigger 'afterViewChange', modInst
@@ -428,7 +431,7 @@ core = $.extend $({}),
           $(_opt.initContentDom).remove()
           _opt.initContentDom = null
         contentDom = _constructContentDom(modName, params, opt.modOpt)
-        core.fadeIn null, contentDom, pModInst?.hasParent(modName), pModInst?.fadeOut(modName), ->
+        core.fadeIn null, contentDom, pModInst?.hasParent(modName), opt.from, pModInst?.fadeOut(modName, opt.from), ->
           loadMod modName, contentDom, params
     ajaxHistory.setMark(mark, replaceState: opt.replaceState) if not opt.holdMark
 

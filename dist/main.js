@@ -226,14 +226,20 @@ _onAfterViewChange = function(modName, modInst) {
 };
 
 _constructContentDom = function(modName, params, opt) {
-  var contentDom;
+  var contentDom, titleTpl;
   if (params == null) {
     params = {};
   }
   if (_opt.constructContentDom) {
     contentDom = _opt.constructContentDom(modName, params, opt);
   } else {
-    contentDom = $(['<div class="sb-mod sb-mod--' + modName.replace(/\//g, '__') + '" data-sb-mod="' + modName + '" data-sb-scene="0">', '<header class="sb-mod__header">', '<h1 class="title"></h1>', '</header>', '<div class="sb-mod__body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">', '<div class="sb-mod__body__msg" data-sb-mod-not-renderred>', _opt.loadingMsg || '内容正在赶来，请稍候...', '</div>', '</div>', '<div class="sb-mod__fixed-footer" style="display: none;">', '</div>', '</div>'].join('')).prependTo(_container);
+    titleTpl = window.require(_opt.modBase + modName + '/title.tpl.html');
+    contentDom = $([
+      '<div class="sb-mod sb-mod--' + modName.replace(/\//g, '__') + '" data-sb-mod="' + modName + '" data-sb-scene="0">', '<header class="sb-mod__header">', titleTpl ? titleTpl.render({
+        params: params,
+        opt: opt
+      }) : '<h1 class="title"></h1>', '</header>', '<div class="sb-mod__body" onscroll="require(\'app\').mod.scroll(this.scrollTop);">', '<div class="sb-mod__body__msg" data-sb-mod-not-renderred>', _opt.loadingMsg || '内容正在赶来，请稍候...', '</div>', '</div>', '<div class="sb-mod__fixed-footer" style="display: none;">', '</div>', '</div>'
+    ].join('')).prependTo(_container);
   }
   return contentDom;
 };
@@ -344,13 +350,14 @@ core = $.extend($({}), {
   removeCache: function(modName) {
     return _modCache[modName] = null;
   },
-  fadeIn: function(modInst, contentDom, backToParent, animateType, cb) {
-    var callback, cssObj, duration, ref, ref1, ref2, res, sd, ttf;
+  fadeIn: function(modInst, contentDom, toParentMod, from, animateType, cb) {
+    var callback, cssObj, duration, fromHistory, percentage, ref, ref1, ref2, ref3, res, sd, ttf;
+    fromHistory = from === 'history';
     if (typeof _opt.onBeforeFadeIn === "function") {
       _opt.onBeforeFadeIn(modInst);
     }
     if (_opt.fadeIn) {
-      return _opt.fadeIn(modInst, contentDom, backToParent, animateType, cb);
+      return _opt.fadeIn(modInst, contentDom, toParentMod, from, animateType, cb);
     } else {
       res = '';
       animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
@@ -362,7 +369,7 @@ core = $.extend($({}), {
             zIndex: '0'
           });
           contentDom.css({
-            zIndex: '2'
+            zIndex: '3'
           });
         }
         return typeof cb === "function" ? cb() : void 0;
@@ -396,15 +403,16 @@ core = $.extend($({}), {
         }
       } else if (animateType === 'slide') {
         sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
+        percentage = Math.min(Math.max(0, (ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0), 100);
         if (_cssProps) {
-          cssObj = {
-            zIndex: '2'
-          };
+          cssObj = {};
           cssObj[_cssProps[1]] = 'none';
           if (sd === 'vu' || sd === 'vd') {
+            cssObj.zIndex = '3';
             cssObj[_cssProps[2]] = 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)';
           } else {
-            cssObj[_cssProps[2]] = 'translate3d(' + (backToParent ? '-' : '') + '100%, 0, 0)';
+            cssObj.zIndex = fromHistory ? '1' : '3';
+            cssObj[_cssProps[2]] = 'translate3d(' + (fromHistory ? '-' + percentage : '100') + '%, 0, 0)';
           }
           contentDom.css(cssObj).show();
           contentDom[0].offsetTop;
@@ -418,14 +426,14 @@ core = $.extend($({}), {
         } else {
           if (sd === 'vu' || sd === 'vd') {
             contentDom.css({
-              zIndex: '2',
+              zIndex: '3',
               left: '0',
               top: (sd === 'vd' ? '-' : '') + '100%'
             });
           } else {
             contentDom.css({
-              zIndex: '2',
-              left: (backToParent ? '-' : '') + '100%',
+              zIndex: fromHistory ? '1' : '3',
+              left: (fromHistory ? '-' + percentage : '100') + '%',
               top: '0'
             });
           }
@@ -444,13 +452,14 @@ core = $.extend($({}), {
       return res;
     }
   },
-  fadeOut: function(modInst, contentDom, backToParent, animateType, cb) {
-    var callback, duration, percentage, ref, ref1, ref2, ref3, ref4, res, sd, ttf, zIndex;
+  fadeOut: function(modInst, contentDom, toParentMod, from, animateType, cb) {
+    var callback, duration, fromHistory, percentage, ref, ref1, ref2, ref3, res, sd, ttf, zIndex;
+    fromHistory = from === 'history';
     if (typeof _opt.onBeforeFadeOut === "function") {
       _opt.onBeforeFadeOut(modInst);
     }
     if (_opt.fadeOut) {
-      return _opt.fadeOut(modInst, contentDom, backToParent, animateType, cb);
+      return _opt.fadeOut(modInst, contentDom, toParentMod, from, animateType, cb);
     } else {
       res = '';
       animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
@@ -482,14 +491,11 @@ core = $.extend($({}), {
         }
       } else if (animateType === 'slide') {
         sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
-        zIndex = '1';
-        percentage = '100';
-        if (((ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0) >= -100) {
-          percentage = parseInt((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0);
-        }
+        zIndex = '2';
+        percentage = Math.min(Math.max(0, (ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0), 100);
         if (sd === 'vu' || sd === 'vd') {
           res = 'fade';
-          zIndex = '3';
+          zIndex = '4';
         }
         if (_cssProps) {
           _requestAnimationFrame(function() {
@@ -501,7 +507,7 @@ core = $.extend($({}), {
             if (sd === 'vu' || sd === 'vd') {
               cssObj[_cssProps[2]] = 'translate3d(0, ' + (sd === 'vd' ? -100 : 100) + '%, 0)';
             } else {
-              cssObj[_cssProps[2]] = 'translate3d(' + (backToParent ? percentage : -percentage) + '%, 0, 0)';
+              cssObj[_cssProps[2]] = 'translate3d(' + (fromHistory ? '100' : '-' + percentage) + '%, 0, 0)';
             }
             contentDom.one(_cssProps[0], callback);
             return contentDom.css(cssObj);
@@ -519,7 +525,7 @@ core = $.extend($({}), {
               }, duration, ttf, callback);
             } else {
               return contentDom.animate({
-                left: (backToParent ? percentage : -percentage) + '%'
+                left: (fromHistory ? '100' : '-' + percentage) + '%'
               }, duration, ttf, callback);
             }
           });
@@ -589,7 +595,7 @@ core = $.extend($({}), {
       _onAfterViewChange(modName, modInst);
       core.trigger('afterViewChange', modInst);
     } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (!modInst.viewed || _viewChangeInfo.from === 'history' || _opt.alwaysUseCache || modInst.alwaysUseCache) && _isSameParams(modInst.getParams(), params)) {
-      modInst.fadeIn(pModInst, pModInst != null ? pModInst.fadeOut(modName) : void 0, function() {
+      modInst.fadeIn(pModInst, opt.from, pModInst != null ? pModInst.fadeOut(modName, opt.from) : void 0, function() {
         _switchNavTab(modInst);
         _onAfterViewChange(modName, modInst);
         return core.trigger('afterViewChange', modInst);
@@ -668,7 +674,7 @@ core = $.extend($({}), {
           _opt.initContentDom = null;
         }
         contentDom = _constructContentDom(modName, params, opt.modOpt);
-        core.fadeIn(null, contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, pModInst != null ? pModInst.fadeOut(modName) : void 0, function() {
+        core.fadeIn(null, contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, opt.from, pModInst != null ? pModInst.fadeOut(modName, opt.from) : void 0, function() {
           return loadMod(modName, contentDom, params);
         });
       }
@@ -1092,8 +1098,8 @@ BaseMod = (function() {
     return res;
   };
 
-  BaseMod.prototype.fadeIn = function(relModInst, animateType, cb) {
-    return core.fadeIn(this, this._contentDom, relModInst != null ? relModInst.hasParent(this._modName) : void 0, animateType, (function(_this) {
+  BaseMod.prototype.fadeIn = function(relModInst, from, animateType, cb) {
+    return core.fadeIn(this, this._contentDom, relModInst != null ? relModInst.hasParent(this._modName) : void 0, from, animateType, (function(_this) {
       return function() {
         _this._afterFadeIn(relModInst);
         return typeof cb === "function" ? cb() : void 0;
@@ -1101,14 +1107,14 @@ BaseMod = (function() {
     })(this));
   };
 
-  BaseMod.prototype.fadeOut = function(relModName, animateType, cb) {
+  BaseMod.prototype.fadeOut = function(relModName, from, animateType, cb) {
     this._contentDom.attr('data-sb-scene', (parseInt(this._contentDom.attr('data-sb-scene')) || 0) + 1);
     this._ifNotCachable(relModName, (function(_this) {
       return function() {
         return core.removeCache(_this._modName);
       };
     })(this));
-    return core.fadeOut(this, this._contentDom, this.hasParent(relModName), animateType, (function(_this) {
+    return core.fadeOut(this, this._contentDom, this.hasParent(relModName), from, animateType, (function(_this) {
       return function() {
         _this._afterFadeOut(relModName);
         return typeof cb === "function" ? cb() : void 0;
