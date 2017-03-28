@@ -179,11 +179,11 @@ core = $.extend $({}),
   removeCache: (modName) ->
     _modCache[modName] = null
 
-  fadeIn: (modInst, contentDom, toParentMod, from, animateType, cb) ->
+  fadeIn: (modInst, contentDom, relation, from, animateType, cb) ->
     fromHistory = from is 'history'
     _opt.onBeforeFadeIn? modInst
     if _opt.fadeIn
-      _opt.fadeIn modInst, contentDom, toParentMod, from, animateType, cb
+      _opt.fadeIn modInst, contentDom, relation, from, animateType, cb
     else
       res = ''
       animateType = animateType || _opt.animate?.type
@@ -218,7 +218,7 @@ core = $.extend $({}),
             contentDom.animate
               opacity: '1'
             , duration, ttf, callback
-      else if animateType is 'slide'
+      else if animateType is 'slide' and relation isnt 'tab'
         sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
         percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent), 100
         if _cssProps
@@ -260,11 +260,11 @@ core = $.extend $({}),
         callback()
       res
 
-  fadeOut: (modInst, contentDom, toParentMod, from, animateType, cb) ->
+  fadeOut: (modInst, contentDom, relation, from, animateType, cb) ->
     fromHistory = from is 'history'
     _opt.onBeforeFadeOut? modInst
     if _opt.fadeOut
-      _opt.fadeOut modInst, contentDom, toParentMod, from, animateType, cb
+      _opt.fadeOut modInst, contentDom, relation, from, animateType, cb
     else
       res = ''
       animateType = animateType || _opt.animate?.type
@@ -287,7 +287,7 @@ core = $.extend $({}),
             contentDom.animate
               opacity: '0'
             , duration, ttf, callback
-      else if animateType is 'slide'
+      else if animateType is 'slide' and relation isnt 'tab'
         sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
         zIndex = '2'
         percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent), 100
@@ -431,7 +431,7 @@ core = $.extend $({}),
           $(_opt.initContentDom).remove()
           _opt.initContentDom = null
         contentDom = _constructContentDom(modName, params, opt.modOpt)
-        core.fadeIn null, contentDom, pModInst?.hasParent(modName), opt.from, pModInst?.fadeOut(modName, opt.from), ->
+        core.fadeIn null, contentDom, pModInst?.getRelation(modName), opt.from, pModInst?.fadeOut(modName, opt.from), ->
           loadMod modName, contentDom, params
     ajaxHistory.setMark(mark, replaceState: opt.replaceState) if not opt.holdMark
 

@@ -17,6 +17,7 @@ class BaseMod
   viewed: false
   showNavTab: false
   navTab: ''
+  tabModNames: []
   events: {}
   parentModNames:
     'home': 1
@@ -115,8 +116,15 @@ class BaseMod
           params: @_params
           opt: @_opt
         sbModInst: @
-      container = this._contentDom[0]
-      container.innerHTML = ''
+      container = @_contentDom[0]
+      react = core.getReact()
+      if @isRenderred()
+        if react.unmountComponentAtNode
+          react.unmountComponentAtNode.call react.ReactDOM, container
+        else
+          return
+      else
+        container.innerHTML = ''
       react.render.call react.ReactDOM, ele, container
     else
       if @headerTpl
@@ -162,7 +170,9 @@ class BaseMod
     @render()
 
   scrollToTop: ->
-    $('> .sb-mod__body', @_contentDom).scrollTop 0
+    dom = @$('.sb-mod__body')
+    dom = @_contentDom if not dom.length
+    dom.scrollTop 0
 
   isRenderred: ->
     $('[data-sb-mod-not-renderred]', @_contentDom).length is 0
@@ -175,8 +185,19 @@ class BaseMod
         break if res
     res
 
+  hasTab: (modName) ->
+    modName in @tabModNames
+
+  getRelation: (modName) ->
+    relation = ''
+    if @hasTab modName
+      relation = 'tab'
+    else if @hasParent modName
+      relation = 'parent'
+    relation
+
   fadeIn: (relModInst, from, animateType, cb) ->
-    core.fadeIn @, @_contentDom, relModInst?.hasParent(@_modName), from, animateType, =>
+    core.fadeIn @, @_contentDom, relModInst.getRelation(@_modName), from, animateType, =>
       @_afterFadeIn relModInst
       cb?()
 
@@ -184,7 +205,7 @@ class BaseMod
     @_contentDom.attr 'data-sb-scene', (parseInt(@_contentDom.attr('data-sb-scene')) or 0) + 1
     @_ifNotCachable relModName, =>
       core.removeCache @_modName
-    core.fadeOut @, @_contentDom, @hasParent(relModName), from, animateType, =>
+    core.fadeOut @, @_contentDom, @getRelation(relModName), from, animateType, =>
       @_afterFadeOut relModName
       cb?()
 

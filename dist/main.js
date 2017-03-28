@@ -350,14 +350,14 @@ core = $.extend($({}), {
   removeCache: function(modName) {
     return _modCache[modName] = null;
   },
-  fadeIn: function(modInst, contentDom, toParentMod, from, animateType, cb) {
+  fadeIn: function(modInst, contentDom, relation, from, animateType, cb) {
     var callback, cssObj, duration, fromHistory, percentage, ref, ref1, ref2, ref3, res, sd, ttf;
     fromHistory = from === 'history';
     if (typeof _opt.onBeforeFadeIn === "function") {
       _opt.onBeforeFadeIn(modInst);
     }
     if (_opt.fadeIn) {
-      return _opt.fadeIn(modInst, contentDom, toParentMod, from, animateType, cb);
+      return _opt.fadeIn(modInst, contentDom, relation, from, animateType, cb);
     } else {
       res = '';
       animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
@@ -401,7 +401,7 @@ core = $.extend($({}), {
             }, duration, ttf, callback);
           });
         }
-      } else if (animateType === 'slide') {
+      } else if (animateType === 'slide' && relation !== 'tab') {
         sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
         percentage = Math.min(Math.max(0, (ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0), 100);
         if (_cssProps) {
@@ -452,14 +452,14 @@ core = $.extend($({}), {
       return res;
     }
   },
-  fadeOut: function(modInst, contentDom, toParentMod, from, animateType, cb) {
+  fadeOut: function(modInst, contentDom, relation, from, animateType, cb) {
     var callback, duration, fromHistory, percentage, ref, ref1, ref2, ref3, res, sd, ttf, zIndex;
     fromHistory = from === 'history';
     if (typeof _opt.onBeforeFadeOut === "function") {
       _opt.onBeforeFadeOut(modInst);
     }
     if (_opt.fadeOut) {
-      return _opt.fadeOut(modInst, contentDom, toParentMod, from, animateType, cb);
+      return _opt.fadeOut(modInst, contentDom, relation, from, animateType, cb);
     } else {
       res = '';
       animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
@@ -489,7 +489,7 @@ core = $.extend($({}), {
             }, duration, ttf, callback);
           });
         }
-      } else if (animateType === 'slide') {
+      } else if (animateType === 'slide' && relation !== 'tab') {
         sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
         zIndex = '2';
         percentage = Math.min(Math.max(0, (ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0), 100);
@@ -674,7 +674,7 @@ core = $.extend($({}), {
           _opt.initContentDom = null;
         }
         contentDom = _constructContentDom(modName, params, opt.modOpt);
-        core.fadeIn(null, contentDom, pModInst != null ? pModInst.hasParent(modName) : void 0, opt.from, pModInst != null ? pModInst.fadeOut(modName, opt.from) : void 0, function() {
+        core.fadeIn(null, contentDom, pModInst != null ? pModInst.getRelation(modName) : void 0, opt.from, pModInst != null ? pModInst.fadeOut(modName, opt.from) : void 0, function() {
           return loadMod(modName, contentDom, params);
         });
       }
@@ -837,7 +837,8 @@ module.exports = core;
 /***/ (function(module, exports, __webpack_require__) {
 
 var $, BaseMod, core,
-  hasProp = {}.hasOwnProperty;
+  hasProp = {}.hasOwnProperty,
+  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 $ = __webpack_require__(0) || window.jQuery || window.$;
 
@@ -863,6 +864,8 @@ BaseMod = (function() {
   BaseMod.prototype.showNavTab = false;
 
   BaseMod.prototype.navTab = '';
+
+  BaseMod.prototype.tabModNames = [];
 
   BaseMod.prototype.events = {};
 
@@ -1013,7 +1016,16 @@ BaseMod = (function() {
         sbModInst: this
       });
       container = this._contentDom[0];
-      container.innerHTML = '';
+      react = core.getReact();
+      if (this.isRenderred()) {
+        if (react.unmountComponentAtNode) {
+          react.unmountComponentAtNode.call(react.ReactDOM, container);
+        } else {
+          return;
+        }
+      } else {
+        container.innerHTML = '';
+      }
       react.render.call(react.ReactDOM, ele, container);
     } else {
       if (this.headerTpl) {
@@ -1074,7 +1086,12 @@ BaseMod = (function() {
   };
 
   BaseMod.prototype.scrollToTop = function() {
-    return $('> .sb-mod__body', this._contentDom).scrollTop(0);
+    var dom;
+    dom = this.$('.sb-mod__body');
+    if (!dom.length) {
+      dom = this._contentDom;
+    }
+    return dom.scrollTop(0);
   };
 
   BaseMod.prototype.isRenderred = function() {
@@ -1098,8 +1115,23 @@ BaseMod = (function() {
     return res;
   };
 
+  BaseMod.prototype.hasTab = function(modName) {
+    return indexOf.call(this.tabModNames, modName) >= 0;
+  };
+
+  BaseMod.prototype.getRelation = function(modName) {
+    var relation;
+    relation = '';
+    if (this.hasTab(modName)) {
+      relation = 'tab';
+    } else if (this.hasParent(modName)) {
+      relation = 'parent';
+    }
+    return relation;
+  };
+
   BaseMod.prototype.fadeIn = function(relModInst, from, animateType, cb) {
-    return core.fadeIn(this, this._contentDom, relModInst != null ? relModInst.hasParent(this._modName) : void 0, from, animateType, (function(_this) {
+    return core.fadeIn(this, this._contentDom, relModInst.getRelation(this._modName), from, animateType, (function(_this) {
       return function() {
         _this._afterFadeIn(relModInst);
         return typeof cb === "function" ? cb() : void 0;
@@ -1114,7 +1146,7 @@ BaseMod = (function() {
         return core.removeCache(_this._modName);
       };
     })(this));
-    return core.fadeOut(this, this._contentDom, this.hasParent(relModName), from, animateType, (function(_this) {
+    return core.fadeOut(this, this._contentDom, this.getRelation(relModName), from, animateType, (function(_this) {
       return function() {
         _this._afterFadeOut(relModName);
         return typeof cb === "function" ? cb() : void 0;
