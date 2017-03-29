@@ -26,6 +26,8 @@ class BaseMod
   fixedFooterTpl: ''
   ReactComponent: null
 
+  _reactComInst: null
+
   _bindEvents: ->
     for own k, v of @events
       k = k.split ' '
@@ -110,22 +112,23 @@ class BaseMod
   render: ->
     if @ReactComponent
       react = core.getReact()
-      ele = react.createElement.call react.React, @ReactComponent,
-        route:
+      route = 
           path: @_modName
           params: @_params
           opt: @_opt
-        sbModInst: @
       container = @_contentDom[0]
-      react = core.getReact()
       if @isRenderred()
         if react.unmountComponentAtNode
           react.unmountComponentAtNode.call react.ReactDOM, container
         else
+          @_reactComInst.onSbModUpdate? route: route
           return
       else
         container.innerHTML = ''
-      react.render.call react.ReactDOM, ele, container
+      ele = react.createElement.call react.React, @ReactComponent,
+        route: route
+        sbModInst: @
+      @_reactComInst = react.render.call react.ReactDOM, ele, container
     else
       if @headerTpl
         @_renderHeader
@@ -221,6 +224,8 @@ class BaseMod
     core.removeCache @_modName
     @_unbindEvents()
     if @ReactComponent
+      @ReactComponent = null
+      @_reactComInst = null
       react = core.getReact()
       react.unmountComponentAtNode.call react.ReactDOM, @_contentDom[0] if react.unmountComponentAtNode
     @_contentDom.remove()

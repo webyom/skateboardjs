@@ -881,6 +881,8 @@ BaseMod = (function() {
 
   BaseMod.prototype.ReactComponent = null;
 
+  BaseMod.prototype._reactComInst = null;
+
   BaseMod.prototype._bindEvents = function() {
     var k, ref, results, v;
     ref = this.events;
@@ -1004,29 +1006,34 @@ BaseMod = (function() {
   };
 
   BaseMod.prototype.render = function() {
-    var container, ele, react;
+    var base, container, ele, react, route;
     if (this.ReactComponent) {
       react = core.getReact();
-      ele = react.createElement.call(react.React, this.ReactComponent, {
-        route: {
-          path: this._modName,
-          params: this._params,
-          opt: this._opt
-        },
-        sbModInst: this
-      });
+      route = {
+        path: this._modName,
+        params: this._params,
+        opt: this._opt
+      };
       container = this._contentDom[0];
-      react = core.getReact();
       if (this.isRenderred()) {
         if (react.unmountComponentAtNode) {
           react.unmountComponentAtNode.call(react.ReactDOM, container);
         } else {
+          if (typeof (base = this._reactComInst).onSbModUpdate === "function") {
+            base.onSbModUpdate({
+              route: route
+            });
+          }
           return;
         }
       } else {
         container.innerHTML = '';
       }
-      react.render.call(react.ReactDOM, ele, container);
+      ele = react.createElement.call(react.React, this.ReactComponent, {
+        route: route,
+        sbModInst: this
+      });
+      this._reactComInst = react.render.call(react.ReactDOM, ele, container);
     } else {
       if (this.headerTpl) {
         this._renderHeader({
@@ -1177,6 +1184,8 @@ BaseMod = (function() {
     core.removeCache(this._modName);
     this._unbindEvents();
     if (this.ReactComponent) {
+      this.ReactComponent = null;
+      this._reactComInst = null;
       react = core.getReact();
       if (react.unmountComponentAtNode) {
         react.unmountComponentAtNode.call(react.ReactDOM, this._contentDom[0]);
