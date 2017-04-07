@@ -1,4 +1,4 @@
-$ = require('jquery') || window.jQuery || window.$
+$ = require 'jquery'
 core = require './core.coffee'
 
 class BaseMod

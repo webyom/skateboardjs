@@ -6,7 +6,7 @@
 	else if(typeof exports === 'object')
 		exports["Skateboard"] = factory(require("jquery"));
 	else
-		root["Skateboard"] = factory(root["jquery"]);
+		root["Skateboard"] = factory(root["$"]);
 })(this, function(__WEBPACK_EXTERNAL_MODULE_0__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -89,7 +89,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_0__;
 var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _getParamsObj, _getParamsStr, _init, _isSameParams, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core,
   hasProp = {}.hasOwnProperty;
 
-$ = __webpack_require__(0) || window.jQuery || window.$;
+$ = __webpack_require__(0);
 
 ajaxHistory = __webpack_require__(4);
 
@@ -840,7 +840,7 @@ var $, BaseMod, core,
   hasProp = {}.hasOwnProperty,
   indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-$ = __webpack_require__(0) || window.jQuery || window.$;
+$ = __webpack_require__(0);
 
 core = __webpack_require__(1);
 
@@ -1224,7 +1224,7 @@ module.exports = {
 
 var $, _checkMark, _currentMark, _exclamationMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _previousMark, _updateCurrentMark, getMark, getPrevMark, init, isSupportHistoryState, setListener, setMark;
 
-$ = __webpack_require__(0) || window.jQuery || window.$;
+$ = __webpack_require__(0);
 
 _previousMark = void 0;
 

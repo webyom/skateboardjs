@@ -1,4 +1,4 @@
-$ = require('jquery') || window.jQuery || window.$
+$ = require 'jquery'
 ajaxHistory = require './ajax-history.coffee'
 
 _modCache = {}

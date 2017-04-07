@@ -1,4 +1,4 @@
-$ = require('jquery') || window.jQuery || window.$
+$ = require 'jquery'
 
 _previousMark = undefined
 _currentMark = undefined

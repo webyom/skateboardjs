@@ -1,6 +1,6 @@
 {
   "name": "skateboardjs",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "A lightweight SPA framework",
   "main": "dist/main.js",
   "scripts": {
@@ -32,7 +32,9 @@
   "engines": {
     "node": ">= 0.8.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "jquery": "^3.2.1"
+  },
   "devDependencies": {
     "coffee-loader": "^0.7.3",
     "webpack": "^2.3.1"
