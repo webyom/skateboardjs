@@ -66,6 +66,7 @@ isSupportHistoryState = () ->
 module.exports =
   init: init
   setListener: setListener
+  push: setMark
   setMark: setMark
   getMark: getMark
   getPrevMark: getPrevMark

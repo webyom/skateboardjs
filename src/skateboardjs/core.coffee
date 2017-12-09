@@ -1,5 +1,5 @@
 $ = require 'jquery'
-ajaxHistory = require './ajax-history.coffee'
+ajaxHistory = require './history.coffee'
 
 _modCache = {}
 _currentMark = null

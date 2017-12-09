@@ -73,7 +73,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -91,7 +91,7 @@ var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModNam
 
 $ = __webpack_require__(0);
 
-ajaxHistory = __webpack_require__(4);
+ajaxHistory = __webpack_require__(2);
 
 _modCache = {};
 
@@ -836,6 +836,113 @@ module.exports = core;
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var $, _checkMark, _currentMark, _exclamationMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _previousMark, _updateCurrentMark, getMark, getPrevMark, init, isSupportHistoryState, setListener, setMark;
+
+$ = __webpack_require__(0);
+
+_previousMark = void 0;
+
+_currentMark = void 0;
+
+_listener = null;
+
+_listenerBind = null;
+
+_exclamationMark = '';
+
+_isSupportHistoryState = !!history.pushState;
+
+_updateCurrentMark = function(mark) {
+  if (mark !== _currentMark) {
+    _previousMark = _currentMark;
+    return _currentMark = mark;
+  }
+};
+
+_checkMark = function() {
+  var mark;
+  mark = getMark();
+  if (mark !== _currentMark && _isValidMark(mark)) {
+    _updateCurrentMark(mark);
+    if (_listener) {
+      return _listener.call(_listenerBind, mark);
+    }
+  }
+};
+
+_isValidMark = function(mark) {
+  return typeof mark === 'string' && !/^[#!]/.test(mark);
+};
+
+init = function(opt) {
+  opt = opt || {};
+  if (opt.exclamationMark) {
+    _exclamationMark = '!';
+  }
+  _isSupportHistoryState = typeof opt.isSupportHistoryState !== 'undefined' ? opt.isSupportHistoryState : _isSupportHistoryState;
+  if (_isSupportHistoryState) {
+    $(window).on('popstate', _checkMark);
+  } else {
+    $(window).on('hashchange', _checkMark);
+  }
+  _checkMark();
+  return init = function() {};
+};
+
+setListener = function(listener, bind) {
+  _listener = typeof listener === 'function' ? listener : null;
+  return _listenerBind = bind || null;
+};
+
+setMark = function(mark, opt) {
+  mark = getMark(mark);
+  opt = opt || {};
+  if (opt.title) {
+    document.title = opt.title;
+  }
+  if (mark !== _currentMark && _isValidMark(mark)) {
+    _updateCurrentMark(mark);
+    if (_isSupportHistoryState) {
+      return history[opt.replaceState ? 'replaceState' : 'pushState'](opt.stateObj, opt.title || document.title, '/' + mark);
+    } else {
+      return location.hash = _exclamationMark + '/' + mark;
+    }
+  }
+};
+
+getMark = function(mark) {
+  if (mark) {
+    return mark.replace(/^\/+/, '');
+  } else if (_isSupportHistoryState) {
+    return location.pathname.replace(/^\/+/, '');
+  } else {
+    return location.hash.replace(/^#!?\/*/, '');
+  }
+};
+
+getPrevMark = function() {
+  return _previousMark;
+};
+
+isSupportHistoryState = function() {
+  return _isSupportHistoryState;
+};
+
+module.exports = {
+  init: init,
+  setListener: setListener,
+  push: setMark,
+  setMark: setMark,
+  getMark: getMark,
+  getPrevMark: getPrevMark,
+  isSupportHistoryState: isSupportHistoryState
+};
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
 var $, BaseMod, core,
   hasProp = {}.hasOwnProperty,
   indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -1203,124 +1310,21 @@ module.exports = BaseMod;
 
 
 /***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var BaseMod, core;
-
-core = __webpack_require__(1);
-
-BaseMod = __webpack_require__(2);
-
-module.exports = {
-  core: core,
-  BaseMod: BaseMod
-};
-
-
-/***/ }),
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $, _checkMark, _currentMark, _exclamationMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _previousMark, _updateCurrentMark, getMark, getPrevMark, init, isSupportHistoryState, setListener, setMark;
+var BaseMod, core, history;
 
-$ = __webpack_require__(0);
+core = __webpack_require__(1);
 
-_previousMark = void 0;
+history = __webpack_require__(2);
 
-_currentMark = void 0;
-
-_listener = null;
-
-_listenerBind = null;
-
-_exclamationMark = '';
-
-_isSupportHistoryState = !!history.pushState;
-
-_updateCurrentMark = function(mark) {
-  if (mark !== _currentMark) {
-    _previousMark = _currentMark;
-    return _currentMark = mark;
-  }
-};
-
-_checkMark = function() {
-  var mark;
-  mark = getMark();
-  if (mark !== _currentMark && _isValidMark(mark)) {
-    _updateCurrentMark(mark);
-    if (_listener) {
-      return _listener.call(_listenerBind, mark);
-    }
-  }
-};
-
-_isValidMark = function(mark) {
-  return typeof mark === 'string' && !/^[#!]/.test(mark);
-};
-
-init = function(opt) {
-  opt = opt || {};
-  if (opt.exclamationMark) {
-    _exclamationMark = '!';
-  }
-  _isSupportHistoryState = typeof opt.isSupportHistoryState !== 'undefined' ? opt.isSupportHistoryState : _isSupportHistoryState;
-  if (_isSupportHistoryState) {
-    $(window).on('popstate', _checkMark);
-  } else {
-    $(window).on('hashchange', _checkMark);
-  }
-  _checkMark();
-  return init = function() {};
-};
-
-setListener = function(listener, bind) {
-  _listener = typeof listener === 'function' ? listener : null;
-  return _listenerBind = bind || null;
-};
-
-setMark = function(mark, opt) {
-  mark = getMark(mark);
-  opt = opt || {};
-  if (opt.title) {
-    document.title = opt.title;
-  }
-  if (mark !== _currentMark && _isValidMark(mark)) {
-    _updateCurrentMark(mark);
-    if (_isSupportHistoryState) {
-      return history[opt.replaceState ? 'replaceState' : 'pushState'](opt.stateObj, opt.title || document.title, '/' + mark);
-    } else {
-      return location.hash = _exclamationMark + '/' + mark;
-    }
-  }
-};
-
-getMark = function(mark) {
-  if (mark) {
-    return mark.replace(/^\/+/, '');
-  } else if (_isSupportHistoryState) {
-    return location.pathname.replace(/^\/+/, '');
-  } else {
-    return location.hash.replace(/^#!?\/*/, '');
-  }
-};
-
-getPrevMark = function() {
-  return _previousMark;
-};
-
-isSupportHistoryState = function() {
-  return _isSupportHistoryState;
-};
+BaseMod = __webpack_require__(3);
 
 module.exports = {
-  init: init,
-  setListener: setListener,
-  setMark: setMark,
-  getMark: getMark,
-  getPrevMark: getPrevMark,
-  isSupportHistoryState: isSupportHistoryState
+  core: core,
+  history: history,
+  BaseMod: BaseMod
 };
 
 
