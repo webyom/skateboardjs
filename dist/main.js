@@ -7,7 +7,7 @@
 		exports["Skateboard"] = factory(require("jquery"));
 	else
 		root["Skateboard"] = factory(root["$"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_0__) {
+})(this, function(__WEBPACK_EXTERNAL_MODULE_1__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -78,18 +78,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_0__;
-
-/***/ }),
-/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _getParamsObj, _getParamsStr, _init, _isSameParams, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core,
   hasProp = {}.hasOwnProperty;
 
-$ = __webpack_require__(0);
+$ = __webpack_require__(1);
 
 ajaxHistory = __webpack_require__(2);
 
@@ -270,7 +264,7 @@ _init = function() {
     if (el.tagName !== 'A') {
       el = $(el).closest('a')[0];
     }
-    if (el && el.tagName === 'A') {
+    if (el && el.tagName === 'A' && el.origin === location.origin) {
       mark = ((ref = el.pathname) != null ? ref.replace(/^\/+/, '') : void 0) || '';
       if (el.search) {
         mark += el.search;
@@ -278,7 +272,7 @@ _init = function() {
       if (el.target) {
         return;
       }
-      if ((mark != null ? mark.indexOf(':back') : void 0) === 0) {
+      if (mark.indexOf(':back') === 0) {
         e.preventDefault();
         tmp = mark.split(':back:');
         if (tmp.length > 1) {
@@ -287,7 +281,7 @@ _init = function() {
         } else {
           return history.back();
         }
-      } else if ((mark != null ? mark.indexOf(_opt.modPrefix + '/') : void 0) === 0) {
+      } else if (_opt.modPrefix === '' || mark.indexOf(_opt.modPrefix + '/') === 0) {
         e.preventDefault();
         return core.view(mark, {
           from: 'link'
@@ -314,7 +308,7 @@ core = $.extend($({}), {
       _opt.modBase = '';
     }
     if (_opt.modPrefix == null) {
-      _opt.modPrefix = 'view';
+      _opt.modPrefix = '';
     }
     _opt.modPrefix = _trimSlash(_opt.modPrefix);
     return _init();
@@ -557,7 +551,7 @@ core = $.extend($({}), {
     params = $.extend(_getParamsObj(markParts[1]), _getParamsObj(opt.params));
     pModName = _currentModName;
     pModInst = _modCache[pModName];
-    if (mark.indexOf(_opt.modPrefix + '/') === 0) {
+    if (_opt.modPrefix === '' || mark.indexOf(_opt.modPrefix + '/') === 0) {
       modName = _trimSlash(markParts[0].replace(_opt.modPrefix, ''));
     }
     modName = modName || _opt.defaultModName;
@@ -691,7 +685,7 @@ core = $.extend($({}), {
     opt = opt || {};
     markParts = mark.split('?');
     params = $.extend(_getParamsObj(markParts[1]), _getParamsObj(opt.params));
-    if (mark.indexOf(_opt.modPrefix + '/') === 0) {
+    if (_opt.modPrefix === '' || mark.indexOf(_opt.modPrefix + '/') === 0) {
       modName = _trimSlash(markParts[0].replace(_opt.modPrefix, ''));
     }
     modName = modName || _opt.defaultModName;
@@ -765,7 +759,7 @@ core = $.extend($({}), {
   back: function(modName, paramsStr) {
     var mark, modInst;
     modName = _trimSlash(modName);
-    if (modName.indexOf(_opt.modPrefix + '/') === 0) {
+    if (_opt.modPrefix === '' || modName.indexOf(_opt.modPrefix + '/') === 0) {
       modName = _trimSlash(modName.replace(_opt.modPrefix, ''));
     }
     paramsStr = _getParamsStr(paramsStr);
@@ -774,7 +768,7 @@ core = $.extend($({}), {
       if (modInst) {
         if (paramsStr) {
           mark = _opt.modPrefix + '/' + modName + '?' + paramsStr;
-          if (mark === modInst.getMark()) {
+          if (_trimSlash(mark) === modInst.getMark()) {
             return core.view(mark, {
               from: 'history'
             });
@@ -825,7 +819,25 @@ core = $.extend($({}), {
     };
     viewOpt = viewOpt || {};
     viewOpt.modOpt = opt;
-    return core.view('view/' + (_opt.alertModName || 'alert') + '?t=' + (new Date().getTime()), viewOpt);
+    return core.view(_opt.modPrefix + '/' + (_opt.alertModName || 'alert') + '?t=' + (new Date().getTime()), viewOpt);
+  },
+  captureScene: function() {
+    var modInst;
+    modInst = _modCache[_currentMark];
+    if (modInst) {
+      return modInst.captureScene();
+    } else {
+      return {
+        captured: -1,
+        getCurrent: function() {
+          return -2;
+        },
+        isChanged: function() {
+          return true;
+        },
+        doInScene: function() {}
+      };
+    }
   }
 });
 
@@ -833,12 +845,18 @@ module.exports = core;
 
 
 /***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_1__;
+
+/***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $, _checkMark, _currentMark, _exclamationMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _previousMark, _updateCurrentMark, getMark, getPrevMark, init, isSupportHistoryState, setListener, setMark;
+var $, _checkMark, _currentMark, _exclamationMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _previousMark, _updateCurrentMark, getMark, getPrevMark, init, isSupportHistoryState, push, setListener, setMark;
 
-$ = __webpack_require__(0);
+$ = __webpack_require__(1);
 
 _previousMark = void 0;
 
@@ -894,6 +912,12 @@ setListener = function(listener, bind) {
   return _listenerBind = bind || null;
 };
 
+push = function(mark) {
+  var core;
+  core = __webpack_require__(0);
+  return core.view(mark);
+};
+
 setMark = function(mark, opt) {
   mark = getMark(mark);
   opt = opt || {};
@@ -931,7 +955,7 @@ isSupportHistoryState = function() {
 module.exports = {
   init: init,
   setListener: setListener,
-  push: setMark,
+  push: push,
   setMark: setMark,
   getMark: getMark,
   getPrevMark: getPrevMark,
@@ -947,9 +971,9 @@ var $, BaseMod, core,
   hasProp = {}.hasOwnProperty,
   indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-$ = __webpack_require__(0);
+$ = __webpack_require__(1);
 
-core = __webpack_require__(1);
+core = __webpack_require__(0);
 
 BaseMod = (function() {
   function BaseMod(mark, modName, contentDom, params, opt, onFirstRender) {
@@ -1268,22 +1292,32 @@ BaseMod = (function() {
     })(this));
   };
 
-  BaseMod.prototype.captureScene = function(callback) {
-    var scene;
-    if (this._contentDom) {
-      scene = parseInt(this._contentDom.attr('data-sb-scene')) || 0;
-      return callback((function(_this) {
-        return function(callback) {
-          var newScene;
-          if (_this._contentDom) {
-            newScene = parseInt(_this._contentDom.attr('data-sb-scene')) || 0;
-            if (newScene === scene) {
-              return callback();
-            }
-          }
-        };
-      })(this));
-    }
+  BaseMod.prototype.captureScene = function() {
+    var captured, doInScene, getCurrent, isChanged;
+    captured = !this._contentDom ? -1 : parseInt(this._contentDom.attr('data-sb-scene')) || 0;
+    getCurrent = (function(_this) {
+      return function() {
+        if (!_this._contentDom) {
+          return -2;
+        } else {
+          return parseInt(_this._contentDom.attr('data-sb-scene')) || 0;
+        }
+      };
+    })(this);
+    isChanged = function() {
+      return getCurrent() !== captured;
+    };
+    doInScene = function(callback) {
+      if (!isChanged()) {
+        return callback();
+      }
+    };
+    return {
+      captured: captured,
+      getCurrent: getCurrent,
+      isChanged: isChanged,
+      doInScene: doInScene
+    };
   };
 
   BaseMod.prototype.destroy = function() {
@@ -1315,7 +1349,7 @@ module.exports = BaseMod;
 
 var BaseMod, core, history;
 
-core = __webpack_require__(1);
+core = __webpack_require__(0);
 
 history = __webpack_require__(2);
 

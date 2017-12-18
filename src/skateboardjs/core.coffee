@@ -121,12 +121,12 @@ _init = ->
     t = new Date()
     if el.tagName isnt 'A'
       el = $(el).closest('a')[0]
-    if el and el.tagName is 'A'
+    if el and el.tagName is 'A' and el.origin is location.origin
       mark = el.pathname?.replace(/^\/+/, '') || ''
       mark += el.search if el.search
       if el.target
         return
-      if mark?.indexOf(':back') is 0
+      if mark.indexOf(':back') is 0
         e.preventDefault()
         tmp = mark.split ':back:'
         if tmp.length > 1
@@ -134,7 +134,7 @@ _init = ->
           core.back tmp[0], tmp[1]
         else
           history.back()
-      else if mark?.indexOf(_opt.modPrefix + '/') is 0
+      else if _opt.modPrefix is '' or mark.indexOf(_opt.modPrefix + '/') is 0
         e.preventDefault()
         core.view mark, from: 'link'
   .on 'click', '[data-refresh-btn]', () ->
@@ -147,7 +147,7 @@ core = $.extend $({}),
     _opt = opt if opt
     _opt.defaultModName ?= 'home'
     _opt.modBase ?= ''
-    _opt.modPrefix ?= 'view'
+    _opt.modPrefix ?= ''
     _opt.modPrefix = _trimSlash _opt.modPrefix
     _init()
 
@@ -340,7 +340,7 @@ core = $.extend $({}),
     params = $.extend _getParamsObj(markParts[1]), _getParamsObj(opt.params)
     pModName = _currentModName
     pModInst = _modCache[pModName]
-    if mark.indexOf(_opt.modPrefix + '/') is 0
+    if _opt.modPrefix is '' or mark.indexOf(_opt.modPrefix + '/') is 0
       modName = _trimSlash markParts[0].replace(_opt.modPrefix, '')
     modName = modName || _opt.defaultModName
     modInst = _modCache[modName]
@@ -440,7 +440,7 @@ core = $.extend $({}),
     opt = opt || {}
     markParts = mark.split '?'
     params = $.extend _getParamsObj(markParts[1]), _getParamsObj(opt.params)
-    if mark.indexOf(_opt.modPrefix + '/') is 0
+    if _opt.modPrefix is '' or mark.indexOf(_opt.modPrefix + '/') is 0
       modName = _trimSlash markParts[0].replace(_opt.modPrefix, '')
     modName = modName || _opt.defaultModName
     modInst = _modCache[modName]
@@ -491,7 +491,7 @@ core = $.extend $({}),
 
   back: (modName, paramsStr) ->
     modName = _trimSlash modName
-    if modName.indexOf(_opt.modPrefix + '/') is 0
+    if _opt.modPrefix is '' or modName.indexOf(_opt.modPrefix + '/') is 0
       modName = _trimSlash modName.replace(_opt.modPrefix, '')
     paramsStr = _getParamsStr paramsStr
     if modName
@@ -499,7 +499,7 @@ core = $.extend $({}),
       if modInst
         if paramsStr
           mark = _opt.modPrefix + '/' + modName + '?' + paramsStr
-          if mark is modInst.getMark()
+          if _trimSlash(mark) is modInst.getMark()
             core.view mark, from: 'history'
           else
             core.view mark, from: 'link'
@@ -532,6 +532,16 @@ core = $.extend $({}),
     opt = opt || {type: 'error'}
     viewOpt = viewOpt || {}
     viewOpt.modOpt = opt
-    core.view 'view/' + (_opt.alertModName || 'alert') + '?t=' + (new Date().getTime()), viewOpt
+    core.view _opt.modPrefix + '/' + (_opt.alertModName || 'alert') + '?t=' + (new Date().getTime()), viewOpt
+
+  captureScene: () ->
+    modInst = _modCache[_currentMark]
+    if modInst
+      modInst.captureScene()
+    else
+      captured: -1
+      getCurrent: () -> -2
+      isChanged: () -> true
+      doInScene: () ->
 
 module.exports = core

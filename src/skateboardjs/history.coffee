@@ -37,6 +37,10 @@ setListener = (listener, bind) ->
   _listener = if typeof listener is 'function' then listener else null
   _listenerBind = bind || null
 
+push = (mark) ->
+  core = require './core.coffee'
+  core.view mark
+
 setMark = (mark, opt) ->
   mark = getMark mark
   opt = opt || {}
@@ -66,7 +70,7 @@ isSupportHistoryState = () ->
 module.exports =
   init: init
   setListener: setListener
-  push: setMark
+  push: push
   setMark: setMark
   getMark: getMark
   getPrevMark: getPrevMark

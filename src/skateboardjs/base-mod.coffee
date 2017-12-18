@@ -212,13 +212,18 @@ class BaseMod
       @_afterFadeOut relModName
       cb?()
 
-  captureScene: (callback) ->
-    if @_contentDom
-      scene = parseInt(@_contentDom.attr('data-sb-scene')) or 0
-      callback (callback) =>
-        if @_contentDom
-          newScene = parseInt(@_contentDom.attr('data-sb-scene')) or 0
-          callback() if newScene is scene
+  captureScene: () ->
+    captured = if not @_contentDom then -1 else parseInt(@_contentDom.attr('data-sb-scene')) or 0
+    getCurrent = () =>
+      if not @_contentDom then -2 else parseInt(@_contentDom.attr('data-sb-scene')) or 0
+    isChanged = ->
+      getCurrent() isnt captured
+    doInScene = (callback) ->
+      callback() if not isChanged()
+    captured: captured
+    getCurrent: getCurrent
+    isChanged: isChanged
+    doInScene: doInScene
 
   destroy: () ->
     core.removeCache @_modName
