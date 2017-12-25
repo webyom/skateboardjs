@@ -125,9 +125,14 @@ class BaseMod
           return
       else
         container.innerHTML = ''
-      ele = react.createElement.call react.React, @ReactComponent,
-        route: route
-        sbModInst: @
+      if react.getReactComponent
+        ele = react.createElement.call react.React, react.getReactComponent @ReactComponent, 
+          route: route
+          sbModInst: @
+      else
+        ele = react.createElement.call react.React, @ReactComponent,
+          route: route
+          sbModInst: @
       @_reactComInst = react.render.call react.ReactDOM, ele, container
     else
       if @headerTpl

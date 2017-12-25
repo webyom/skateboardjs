@@ -158,13 +158,14 @@ core = $.extend $({}),
     _opt.modBase
 
   getReact: ->
-    if not _opt.react
-      _opt.react = 
+    if not _opt.react?.React
+      _opt.react = Object.assign
         React: window.React
         createElement: window.React?.createElement
         ReactDOM: window.ReactDOM
         render: window.ReactDOM?.render
         unmountComponentAtNode: window.ReactDOM?.unmountComponentAtNode
+      , _opt.react
     _opt.react
 
   getPreviousModName: () ->

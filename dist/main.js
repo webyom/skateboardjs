@@ -320,15 +320,15 @@ core = $.extend($({}), {
     return _opt.modBase;
   },
   getReact: function() {
-    var ref, ref1, ref2;
-    if (!_opt.react) {
-      _opt.react = {
+    var ref, ref1, ref2, ref3;
+    if (!((ref = _opt.react) != null ? ref.React : void 0)) {
+      _opt.react = Object.assign({
         React: window.React,
-        createElement: (ref = window.React) != null ? ref.createElement : void 0,
+        createElement: (ref1 = window.React) != null ? ref1.createElement : void 0,
         ReactDOM: window.ReactDOM,
-        render: (ref1 = window.ReactDOM) != null ? ref1.render : void 0,
-        unmountComponentAtNode: (ref2 = window.ReactDOM) != null ? ref2.unmountComponentAtNode : void 0
-      };
+        render: (ref2 = window.ReactDOM) != null ? ref2.render : void 0,
+        unmountComponentAtNode: (ref3 = window.ReactDOM) != null ? ref3.unmountComponentAtNode : void 0
+      }, _opt.react);
     }
     return _opt.react;
   },
@@ -1160,10 +1160,17 @@ BaseMod = (function() {
       } else {
         container.innerHTML = '';
       }
-      ele = react.createElement.call(react.React, this.ReactComponent, {
-        route: route,
-        sbModInst: this
-      });
+      if (react.getReactComponent) {
+        ele = react.createElement.call(react.React, react.getReactComponent(this.ReactComponent, {
+          route: route,
+          sbModInst: this
+        }));
+      } else {
+        ele = react.createElement.call(react.React, this.ReactComponent, {
+          route: route,
+          sbModInst: this
+        });
+      }
       this._reactComInst = react.render.call(react.ReactDOM, ele, container);
     } else {
       if (this.headerTpl) {
