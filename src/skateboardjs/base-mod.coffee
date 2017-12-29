@@ -24,6 +24,7 @@ class BaseMod
   headerTpl: ''
   bodyTpl: ''
   fixedFooterTpl: ''
+  className: ''
   ReactComponent: null
 
   _reactComInst: null
@@ -110,6 +111,7 @@ class BaseMod
     @_onFirstRender = null
 
   render: ->
+    @_contentDom.addClass @className if @className
     if @ReactComponent
       react = core.getReact()
       route = 
@@ -205,7 +207,7 @@ class BaseMod
     relation
 
   fadeIn: (relModInst, from, animateType, cb) ->
-    core.fadeIn @, @_contentDom, relModInst.getRelation(@_modName), from, animateType, =>
+    core.fadeIn @, @_contentDom, relModInst?.getRelation(@_modName), from, animateType, =>
       @_afterFadeIn relModInst
       cb?()
 

@@ -76,7 +76,7 @@ _onAfterViewChange = (modName, modInst) ->
   if _opt.onAfterViewChange
     _opt.onAfterViewChange modName, modInst
   else
-    modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '-')
+    modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '__')
     bodyClassName = document.body.className.replace (/\bbody-sb-mod--\S+/), modClassName
     if (/\bsb-show-nav\b/).test bodyClassName
       if not modInst.showNavTab
@@ -121,11 +121,13 @@ _init = ->
     t = new Date()
     if el.tagName isnt 'A'
       el = $(el).closest('a')[0]
-    if el and el.tagName is 'A' and el.origin is location.origin
-      mark = el.pathname?.replace(/^\/+/, '') || ''
-      mark += el.search if el.search
-      if el.target
-        return
+    if el and el.tagName is 'A' and el.origin is location.origin and not el.target
+      if el.pathname is location.pathname and el.hash
+        mark = el.hash.replace /^#!?\/*/, ''
+        return if mark and el.hash.length - mark.length < 2
+      else
+        mark = el.pathname?.replace(/^\/+/, '') || ''
+        mark += el.search if el.search
       if mark.indexOf(':back') is 0
         e.preventDefault()
         tmp = mark.split ':back:'

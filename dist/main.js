@@ -206,7 +206,7 @@ _onAfterViewChange = function(modName, modInst) {
   if (_opt.onAfterViewChange) {
     return _opt.onAfterViewChange(modName, modInst);
   } else {
-    modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '-');
+    modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '__');
     bodyClassName = document.body.className.replace(/\bbody-sb-mod--\S+/, modClassName);
     if (/\bsb-show-nav\b/.test(bodyClassName)) {
       if (!modInst.showNavTab) {
@@ -264,13 +264,17 @@ _init = function() {
     if (el.tagName !== 'A') {
       el = $(el).closest('a')[0];
     }
-    if (el && el.tagName === 'A' && el.origin === location.origin) {
-      mark = ((ref = el.pathname) != null ? ref.replace(/^\/+/, '') : void 0) || '';
-      if (el.search) {
-        mark += el.search;
-      }
-      if (el.target) {
-        return;
+    if (el && el.tagName === 'A' && el.origin === location.origin && !el.target) {
+      if (el.pathname === location.pathname && el.hash) {
+        mark = el.hash.replace(/^#!?\/*/, '');
+        if (mark && el.hash.length - mark.length < 2) {
+          return;
+        }
+      } else {
+        mark = ((ref = el.pathname) != null ? ref.replace(/^\/+/, '') : void 0) || '';
+        if (el.search) {
+          mark += el.search;
+        }
       }
       if (mark.indexOf(':back') === 0) {
         e.preventDefault();
@@ -854,7 +858,7 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_1__;
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $, _checkMark, _currentMark, _exclamationMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _previousMark, _updateCurrentMark, getMark, getPrevMark, init, isSupportHistoryState, push, setListener, setMark;
+var $, _checkMark, _currentMark, _exclamationMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _previousMark, _updateCurrentMark, getMark, getPrevMark, init, isSupportHistoryState, push, setListener, setMark, to;
 
 $ = __webpack_require__(1);
 
@@ -912,6 +916,15 @@ setListener = function(listener, bind) {
   return _listenerBind = bind || null;
 };
 
+to = function(path) {
+  path = path.replace(/^\/*/, '/');
+  if (_isSupportHistoryState) {
+    return path;
+  } else {
+    return '#' + path;
+  }
+};
+
 push = function(mark) {
   var core;
   core = __webpack_require__(0);
@@ -955,6 +968,7 @@ isSupportHistoryState = function() {
 module.exports = {
   init: init,
   setListener: setListener,
+  to: to,
   push: push,
   setMark: setMark,
   getMark: getMark,
@@ -1009,6 +1023,8 @@ BaseMod = (function() {
   BaseMod.prototype.bodyTpl = '';
 
   BaseMod.prototype.fixedFooterTpl = '';
+
+  BaseMod.prototype.className = '';
 
   BaseMod.prototype.ReactComponent = null;
 
@@ -1138,6 +1154,9 @@ BaseMod = (function() {
 
   BaseMod.prototype.render = function() {
     var base, container, ele, react, route;
+    if (this.className) {
+      this._contentDom.addClass(this.className);
+    }
     if (this.ReactComponent) {
       react = core.getReact();
       route = {
@@ -1276,7 +1295,7 @@ BaseMod = (function() {
   };
 
   BaseMod.prototype.fadeIn = function(relModInst, from, animateType, cb) {
-    return core.fadeIn(this, this._contentDom, relModInst.getRelation(this._modName), from, animateType, (function(_this) {
+    return core.fadeIn(this, this._contentDom, relModInst != null ? relModInst.getRelation(this._modName) : void 0, from, animateType, (function(_this) {
       return function() {
         _this._afterFadeIn(relModInst);
         return typeof cb === "function" ? cb() : void 0;

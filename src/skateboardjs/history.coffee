@@ -37,6 +37,10 @@ setListener = (listener, bind) ->
   _listener = if typeof listener is 'function' then listener else null
   _listenerBind = bind || null
 
+to = (path) ->
+  path = path.replace /^\/*/, '/'
+  return if _isSupportHistoryState then path else '#' + path
+
 push = (mark) ->
   core = require './core.coffee'
   core.view mark
@@ -70,6 +74,7 @@ isSupportHistoryState = () ->
 module.exports =
   init: init
   setListener: setListener
+  to: to
   push: push
   setMark: setMark
   getMark: getMark
