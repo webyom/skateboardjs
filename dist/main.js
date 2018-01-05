@@ -276,7 +276,7 @@ _init = function() {
       el = $(el).closest('a')[0];
     }
     if (el && el.tagName === 'A' && _isSameOrigin(el) && !el.target) {
-      if (el.pathname === location.pathname && el.hash) {
+      if ((el.pathname || '/') === location.pathname && el.hash) {
         mark = el.hash.replace(/^#!?\/*/, '');
         if (mark && el.hash.length - mark.length < 2) {
           return;

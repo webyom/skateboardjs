@@ -130,7 +130,7 @@ _init = ->
     if el.tagName isnt 'A'
       el = $(el).closest('a')[0]
     if el and el.tagName is 'A' and _isSameOrigin(el) and not el.target
-      if el.pathname is location.pathname and el.hash
+      if (el.pathname || '/') is location.pathname and el.hash
         mark = el.hash.replace /^#!?\/*/, ''
         return if mark and el.hash.length - mark.length < 2
       else
