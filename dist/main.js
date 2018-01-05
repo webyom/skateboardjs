@@ -80,7 +80,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _getParamsObj, _getParamsStr, _init, _isSameParams, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core,
+var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _getParamsObj, _getParamsStr, _init, _isSameOrigin, _isSameParams, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core,
   hasProp = {}.hasOwnProperty;
 
 $ = __webpack_require__(1);
@@ -238,6 +238,17 @@ _constructContentDom = function(modName, params, opt) {
   return contentDom;
 };
 
+_isSameOrigin = function(link) {
+  if (link.origin) {
+    if (link.origin === location.origin) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  return (link.href + '/').indexOf(location.origin + '/') === 0;
+};
+
 _init = function() {
   var t;
   if (!/\bbody-sb-mod--\S+/.test(document.body.className)) {
@@ -264,7 +275,7 @@ _init = function() {
     if (el.tagName !== 'A') {
       el = $(el).closest('a')[0];
     }
-    if (el && el.tagName === 'A' && el.origin === location.origin && !el.target) {
+    if (el && el.tagName === 'A' && _isSameOrigin(el) && !el.target) {
       if (el.pathname === location.pathname && el.hash) {
         mark = el.hash.replace(/^#!?\/*/, '');
         if (mark && el.hash.length - mark.length < 2) {

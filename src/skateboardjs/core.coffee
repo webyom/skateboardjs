@@ -106,6 +106,14 @@ _constructContentDom = (modName, params = {}, opt) ->
     ].join('')).prependTo _container
   contentDom
 
+_isSameOrigin = (link) ->
+  if link.origin
+    if link.origin is location.origin
+      return true
+    else
+      return false
+  return (link.href + '/').indexOf(location.origin + '/') is 0
+
 _init = ->
   $(document.body).addClass 'body-sb-mod--init-mod' unless (/\bbody-sb-mod--\S+/).test document.body.className
   _container = $(_opt.container) if _opt.container
@@ -121,7 +129,7 @@ _init = ->
     t = new Date()
     if el.tagName isnt 'A'
       el = $(el).closest('a')[0]
-    if el and el.tagName is 'A' and el.origin is location.origin and not el.target
+    if el and el.tagName is 'A' and _isSameOrigin(el) and not el.target
       if el.pathname is location.pathname and el.hash
         mark = el.hash.replace /^#!?\/*/, ''
         return if mark and el.hash.length - mark.length < 2
