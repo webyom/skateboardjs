@@ -27,6 +27,18 @@ _cssProps = (->
 _requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || (callback) ->
   setTimeout callback, 16
 
+_isElectron = !!window.require('electron')
+
+_requireMod = (modName, callback, errCallback) ->
+  path = _opt.modBase + modName + '/main'
+  if _isElectron
+    try
+      callback window.require path
+    catch err
+      errCallback err
+  else
+    window.require [path], callback, errCallback
+
 _trimSlash = (str) ->
   if str
     str.replace /^\/+|\/+$/g, ''
@@ -89,7 +101,8 @@ _constructContentDom = (modName, params = {}, opt) ->
   if _opt.constructContentDom
     contentDom = _opt.constructContentDom modName, params, opt
   else
-    titleTpl = window.require _opt.modBase + modName + '/title.tpl.html'
+    try
+      titleTpl = window.require _opt.modBase + modName + '/title.tpl.html'
     contentDom = $([
       '<div class="sb-mod sb-mod--' + modName.replace(/\//g, '__') + '" data-sb-mod="' + modName + '" data-sb-scene="0">'
         '<header class="sb-mod__header">'
@@ -401,7 +414,7 @@ core = $.extend $({}),
       modInst?.destroy()
       $('[data-sb-mod="' + modName + '"]', _container).remove()
       loadMod = (modName, contentDom, params) ->
-        window.require [_opt.modBase + modName + '/main'], (com) ->
+        _requireMod modName, (com) ->
           if viewId is _viewId and not _modCache[modName]
             try
               modInst = _modCache[modName] = new com.Mod mark, modName, contentDom, params, opt.modOpt
@@ -471,7 +484,7 @@ core = $.extend $({}),
       modInst?.destroy()
       $('[data-sb-mod="' + modName + '"]', _container).remove()
       loadMod = (modName, contentDom, params) ->
-        window.require [_opt.modBase + modName + '/main'], (com) ->
+        _requireMod modName, (com) ->
           if viewId is _viewId and loadId is _loadId and not _modCache[modName]
             try
               modInst = _modCache[modName] = new com.Mod mark, modName, contentDom, params, opt.modOpt, ->

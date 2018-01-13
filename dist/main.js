@@ -80,7 +80,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _getParamsObj, _getParamsStr, _init, _isSameOrigin, _isSameParams, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core,
+var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _getParamsObj, _getParamsStr, _init, _isElectron, _isSameOrigin, _isSameParams, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _requireMod, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core,
   hasProp = {}.hasOwnProperty;
 
 $ = __webpack_require__(1);
@@ -126,6 +126,23 @@ _cssProps = (function() {
 
 _requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function(callback) {
   return setTimeout(callback, 16);
+};
+
+_isElectron = !!window.require('electron');
+
+_requireMod = function(modName, callback, errCallback) {
+  var err, path;
+  path = _opt.modBase + modName + '/main';
+  if (_isElectron) {
+    try {
+      return callback(window.require(path));
+    } catch (error) {
+      err = error;
+      return errCallback(err);
+    }
+  } else {
+    return window.require([path], callback, errCallback);
+  }
 };
 
 _trimSlash = function(str) {
@@ -227,7 +244,9 @@ _constructContentDom = function(modName, params, opt) {
   if (_opt.constructContentDom) {
     contentDom = _opt.constructContentDom(modName, params, opt);
   } else {
-    titleTpl = window.require(_opt.modBase + modName + '/title.tpl.html');
+    try {
+      titleTpl = window.require(_opt.modBase + modName + '/title.tpl.html');
+    } catch (error) {}
     contentDom = $([
       '<div class="sb-mod sb-mod--' + modName.replace(/\//g, '__') + '" data-sb-mod="' + modName + '" data-sb-scene="0">', '<header class="sb-mod__header">', titleTpl ? titleTpl.render({
         params: params,
@@ -617,7 +636,7 @@ core = $.extend($({}), {
       }
       $('[data-sb-mod="' + modName + '"]', _container).remove();
       loadMod = function(modName, contentDom, params) {
-        return window.require([_opt.modBase + modName + '/main'], function(com) {
+        return _requireMod(modName, function(com) {
           var e;
           if (viewId === _viewId && !_modCache[modName]) {
             try {
@@ -719,7 +738,7 @@ core = $.extend($({}), {
       }
       $('[data-sb-mod="' + modName + '"]', _container).remove();
       loadMod = function(modName, contentDom, params) {
-        return window.require([_opt.modBase + modName + '/main'], function(com) {
+        return _requireMod(modName, function(com) {
           var e;
           if (viewId === _viewId && loadId === _loadId && !_modCache[modName]) {
             try {
