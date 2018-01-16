@@ -128,7 +128,7 @@ _requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAni
   return setTimeout(callback, 16);
 };
 
-_isElectron = !!window.require('electron');
+_isElectron = !!(typeof window.require === "function" ? window.require('electron') : void 0);
 
 _requireMod = function(modName, callback, errCallback) {
   var err, path;

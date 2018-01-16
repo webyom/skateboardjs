@@ -27,7 +27,7 @@ _cssProps = (->
 _requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || (callback) ->
   setTimeout callback, 16
 
-_isElectron = !!window.require('electron')
+_isElectron = !!window.require?('electron')
 
 _requireMod = (modName, callback, errCallback) ->
   path = _opt.modBase + modName + '/main'
