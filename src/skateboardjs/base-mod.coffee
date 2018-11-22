@@ -24,7 +24,7 @@ class BaseMod
   headerTpl: ''
   bodyTpl: ''
   fixedFooterTpl: ''
-  className: ''
+  moduleClassNames: ''
   ReactComponent: null
 
   _reactComInst: null
@@ -111,7 +111,10 @@ class BaseMod
     @_onFirstRender = null
 
   render: ->
-    @_contentDom.addClass @className if @className
+    if typeof @moduleClassNames is 'function'
+      @_contentDom.addClass @moduleClassNames()
+    else if @moduleClassNames
+      @_contentDom.addClass @moduleClassNames
     if @ReactComponent
       react = core.getReact()
       route = 
@@ -130,10 +133,12 @@ class BaseMod
         container.innerHTML = ''
       if react.getReactComponent
         ele = react.createElement.call react.React, react.getReactComponent @ReactComponent, 
+          moduleClassNames: @moduleClassNames
           route: route
           sbModInst: @
       else
         ele = react.createElement.call react.React, @ReactComponent,
+          moduleClassNames: @moduleClassNames
           route: route
           sbModInst: @
       @_reactComInst = react.render.call react.ReactDOM, ele, container

@@ -1058,7 +1058,7 @@ BaseMod = (function() {
 
   BaseMod.prototype.fixedFooterTpl = '';
 
-  BaseMod.prototype.className = '';
+  BaseMod.prototype.moduleClassNames = '';
 
   BaseMod.prototype.ReactComponent = null;
 
@@ -1188,8 +1188,10 @@ BaseMod = (function() {
 
   BaseMod.prototype.render = function() {
     var base, container, ele, react, route;
-    if (this.className) {
-      this._contentDom.addClass(this.className);
+    if (typeof this.moduleClassNames === 'function') {
+      this._contentDom.addClass(this.moduleClassNames());
+    } else if (this.moduleClassNames) {
+      this._contentDom.addClass(this.moduleClassNames);
     }
     if (this.ReactComponent) {
       react = core.getReact();
@@ -1216,11 +1218,13 @@ BaseMod = (function() {
       }
       if (react.getReactComponent) {
         ele = react.createElement.call(react.React, react.getReactComponent(this.ReactComponent, {
+          moduleClassNames: this.moduleClassNames,
           route: route,
           sbModInst: this
         }));
       } else {
         ele = react.createElement.call(react.React, this.ReactComponent, {
+          moduleClassNames: this.moduleClassNames,
           route: route,
           sbModInst: this
         });
