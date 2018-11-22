@@ -115,9 +115,10 @@ class BaseMod
     if @ReactComponent
       react = core.getReact()
       route = 
-          path: @_modName
-          params: @_params
-          opt: @_opt
+        mark: @_mark
+        path: @_modName
+        params: @_params
+        opt: @_opt
       container = @_contentDom[0]
       if @isRenderred()
         if react.unmountComponentAtNode

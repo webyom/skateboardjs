@@ -153,8 +153,7 @@ _init = ->
         e.preventDefault()
         tmp = mark.split ':back:'
         if tmp.length > 1
-          tmp = tmp[1].split '?'
-          core.back tmp[0], tmp[1]
+          core.back tmp[1]
         else
           history.back()
       else if _opt.modPrefix is '' or mark.indexOf(_opt.modPrefix + '/') is 0
@@ -365,7 +364,9 @@ core = $.extend $({}),
     pModName = _currentModName
     pModInst = _modCache[pModName]
     if _opt.modPrefix is '' or mark.indexOf(_opt.modPrefix + '/') is 0
+      markParts = markParts[0].split '/-/'
       modName = _trimSlash markParts[0].replace(_opt.modPrefix, '')
+      params = $.extend params, markParts[1].split '/' if markParts[1]
     modName = modName || _opt.defaultModName
     modInst = _modCache[modName]
     _viewChangeInfo =
@@ -465,7 +466,9 @@ core = $.extend $({}),
     markParts = mark.split '?'
     params = $.extend _getParamsObj(markParts[1]), _getParamsObj(opt.params)
     if _opt.modPrefix is '' or mark.indexOf(_opt.modPrefix + '/') is 0
+      markParts = markParts[0].split '/-/'
       modName = _trimSlash markParts[0].replace(_opt.modPrefix, '')
+      params = $.extend params, markParts[1].split '/' if markParts[1]
     modName = modName || _opt.defaultModName
     modInst = _modCache[modName]
     _loadId++ if onLoad
@@ -513,27 +516,25 @@ core = $.extend $({}),
       contentDom = _constructContentDom(modName, params, opt.modOpt)
       loadMod modName, contentDom, params
 
-  back: (modName, paramsStr) ->
-    modName = _trimSlash modName
-    if _opt.modPrefix is '' or modName.indexOf(_opt.modPrefix + '/') is 0
-      modName = _trimSlash modName.replace(_opt.modPrefix, '')
-    paramsStr = _getParamsStr paramsStr
+  back: (mark) ->
+    mark = _trimSlash mark
+    markParts = mark.split '?'
+    params = markParts[1]
+    if _opt.modPrefix is '' or mark.indexOf(_opt.modPrefix + '/') is 0
+      markParts = markParts[0].split '/-/'
+      modName = _trimSlash markParts[0].replace(_opt.modPrefix, '')
+      params = params || markParts[1]
     if modName
       modInst = _modCache[modName]
       if modInst
-        if paramsStr
-          mark = _opt.modPrefix + '/' + modName + '?' + paramsStr
-          if _trimSlash(mark) is modInst.getMark()
+        if params
+          if mark is modInst.getMark()
             core.view mark, from: 'history'
           else
             core.view mark, from: 'link'
         else
           core.view modInst.getMark(), from: 'history'
       else
-        if paramsStr
-          mark = _opt.modPrefix + '/' + modName + '?' + paramsStr
-        else
-          mark = _opt.modPrefix + '/' + modName
         core.view mark, from: 'link'
     else
       history.back()

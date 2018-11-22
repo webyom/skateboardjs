@@ -310,8 +310,7 @@ _init = function() {
         e.preventDefault();
         tmp = mark.split(':back:');
         if (tmp.length > 1) {
-          tmp = tmp[1].split('?');
-          return core.back(tmp[0], tmp[1]);
+          return core.back(tmp[1]);
         } else {
           return history.back();
         }
@@ -586,7 +585,11 @@ core = $.extend($({}), {
     pModName = _currentModName;
     pModInst = _modCache[pModName];
     if (_opt.modPrefix === '' || mark.indexOf(_opt.modPrefix + '/') === 0) {
+      markParts = markParts[0].split('/-/');
       modName = _trimSlash(markParts[0].replace(_opt.modPrefix, ''));
+      if (markParts[1]) {
+        params = $.extend(params, markParts[1].split('/'));
+      }
     }
     modName = modName || _opt.defaultModName;
     modInst = _modCache[modName];
@@ -720,7 +723,11 @@ core = $.extend($({}), {
     markParts = mark.split('?');
     params = $.extend(_getParamsObj(markParts[1]), _getParamsObj(opt.params));
     if (_opt.modPrefix === '' || mark.indexOf(_opt.modPrefix + '/') === 0) {
+      markParts = markParts[0].split('/-/');
       modName = _trimSlash(markParts[0].replace(_opt.modPrefix, ''));
+      if (markParts[1]) {
+        params = $.extend(params, markParts[1].split('/'));
+      }
     }
     modName = modName || _opt.defaultModName;
     modInst = _modCache[modName];
@@ -790,19 +797,21 @@ core = $.extend($({}), {
       return loadMod(modName, contentDom, params);
     }
   },
-  back: function(modName, paramsStr) {
-    var mark, modInst;
-    modName = _trimSlash(modName);
-    if (_opt.modPrefix === '' || modName.indexOf(_opt.modPrefix + '/') === 0) {
-      modName = _trimSlash(modName.replace(_opt.modPrefix, ''));
+  back: function(mark) {
+    var markParts, modInst, modName, params;
+    mark = _trimSlash(mark);
+    markParts = mark.split('?');
+    params = markParts[1];
+    if (_opt.modPrefix === '' || mark.indexOf(_opt.modPrefix + '/') === 0) {
+      markParts = markParts[0].split('/-/');
+      modName = _trimSlash(markParts[0].replace(_opt.modPrefix, ''));
+      params = params || markParts[1];
     }
-    paramsStr = _getParamsStr(paramsStr);
     if (modName) {
       modInst = _modCache[modName];
       if (modInst) {
-        if (paramsStr) {
-          mark = _opt.modPrefix + '/' + modName + '?' + paramsStr;
-          if (_trimSlash(mark) === modInst.getMark()) {
+        if (params) {
+          if (mark === modInst.getMark()) {
             return core.view(mark, {
               from: 'history'
             });
@@ -817,11 +826,6 @@ core = $.extend($({}), {
           });
         }
       } else {
-        if (paramsStr) {
-          mark = _opt.modPrefix + '/' + modName + '?' + paramsStr;
-        } else {
-          mark = _opt.modPrefix + '/' + modName;
-        }
         return core.view(mark, {
           from: 'link'
         });
@@ -1190,6 +1194,7 @@ BaseMod = (function() {
     if (this.ReactComponent) {
       react = core.getReact();
       route = {
+        mark: this._mark,
         path: this._modName,
         params: this._params,
         opt: this._opt
