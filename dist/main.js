@@ -607,6 +607,16 @@ core = $.extend($({}), {
     if ((typeof _opt.onBeforeViewChange === "function" ? _opt.onBeforeViewChange(modName, modInst) : void 0) === false) {
       return;
     }
+    if (opt.useCache && modInst && modInst.isRenderred()) {
+      if (modName !== pModName) {
+        modInst.fadeIn(pModInst, opt.from, pModInst != null ? pModInst.fadeOut(modName, opt.from) : void 0, function() {
+          _switchNavTab(modInst);
+          _onAfterViewChange(modName, modInst);
+          return core.trigger('afterViewChange', modInst);
+        });
+      }
+      return;
+    }
     if (mark === _currentMark && modName !== 'alert') {
       if (modInst) {
         modInst.refresh();
@@ -1217,11 +1227,11 @@ BaseMod = (function() {
         container.innerHTML = '';
       }
       if (react.getReactComponent) {
-        ele = react.createElement.call(react.React, react.getReactComponent(this.ReactComponent, {
+        ele = react.createElement.call(react.React, react.getReactComponent(this.ReactComponent), {
           moduleClassNames: this.moduleClassNames,
           route: route,
           sbModInst: this
-        }));
+        });
       } else {
         ele = react.createElement.call(react.React, this.ReactComponent, {
           moduleClassNames: this.moduleClassNames,

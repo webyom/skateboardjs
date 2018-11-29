@@ -132,7 +132,7 @@ class BaseMod
       else
         container.innerHTML = ''
       if react.getReactComponent
-        ele = react.createElement.call react.React, react.getReactComponent @ReactComponent, 
+        ele = react.createElement.call react.React, react.getReactComponent(@ReactComponent), 
           moduleClassNames: @moduleClassNames
           route: route
           sbModInst: @

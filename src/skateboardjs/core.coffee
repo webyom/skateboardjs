@@ -380,6 +380,13 @@ core = $.extend $({}),
       params: params
       opt: opt.modOpt
     return if _opt.onBeforeViewChange?(modName, modInst) is false
+    if opt.useCache and modInst and modInst.isRenderred()
+      if modName isnt pModName
+        modInst.fadeIn pModInst, opt.from, pModInst?.fadeOut(modName, opt.from), ->
+          _switchNavTab modInst
+          _onAfterViewChange modName, modInst
+          core.trigger 'afterViewChange', modInst
+      return
     if mark is _currentMark and modName isnt 'alert'
       if modInst
         modInst.refresh()
