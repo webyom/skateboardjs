@@ -1197,7 +1197,7 @@ BaseMod = (function() {
   };
 
   BaseMod.prototype.render = function() {
-    var base, container, ele, react, route;
+    var ReactComponent, container, ele, react, ref, route;
     if (typeof this.moduleClassNames === 'function') {
       this._contentDom.addClass(this.moduleClassNames());
     } else if (this.moduleClassNames) {
@@ -1213,32 +1213,28 @@ BaseMod = (function() {
       };
       container = this._contentDom[0];
       if (this.isRenderred()) {
-        if (react.unmountComponentAtNode) {
-          react.unmountComponentAtNode.call(react.ReactDOM, container);
-        } else {
-          if (typeof (base = this._reactComInst).onSbModUpdate === "function") {
-            base.onSbModUpdate({
-              route: route
-            });
-          }
+        if ((ref = this._reactComInst) != null ? ref.onSbModUpdate : void 0) {
+          this._reactComInst.onSbModUpdate({
+            route: route
+          });
           return;
         }
+        if (!react.unmountComponentAtNode) {
+          return;
+        }
+        react.unmountComponentAtNode.call(react.ReactDOM, container);
       } else {
         container.innerHTML = '';
       }
+      ReactComponent = this.ReactComponent;
       if (react.getReactComponent) {
-        ele = react.createElement.call(react.React, react.getReactComponent(this.ReactComponent), {
-          moduleClassNames: this.moduleClassNames,
-          route: route,
-          sbModInst: this
-        });
-      } else {
-        ele = react.createElement.call(react.React, this.ReactComponent, {
-          moduleClassNames: this.moduleClassNames,
-          route: route,
-          sbModInst: this
-        });
+        ReactComponent = react.getReactComponent(ReactComponent);
       }
+      ele = react.createElement.call(react.React, ReactComponent, {
+        moduleClassNames: this.moduleClassNames,
+        route: route,
+        sbModInst: this
+      });
       this._reactComInst = react.render.call(react.ReactDOM, ele, container);
     } else {
       if (this.headerTpl) {

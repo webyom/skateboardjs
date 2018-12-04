@@ -124,23 +124,19 @@ class BaseMod
         opt: @_opt
       container = @_contentDom[0]
       if @isRenderred()
-        if react.unmountComponentAtNode
-          react.unmountComponentAtNode.call react.ReactDOM, container
-        else
-          @_reactComInst.onSbModUpdate? route: route
+        if @_reactComInst?.onSbModUpdate
+          @_reactComInst.onSbModUpdate route: route
           return
+        return if not react.unmountComponentAtNode
+        react.unmountComponentAtNode.call react.ReactDOM, container
       else
         container.innerHTML = ''
-      if react.getReactComponent
-        ele = react.createElement.call react.React, react.getReactComponent(@ReactComponent), 
-          moduleClassNames: @moduleClassNames
-          route: route
-          sbModInst: @
-      else
-        ele = react.createElement.call react.React, @ReactComponent,
-          moduleClassNames: @moduleClassNames
-          route: route
-          sbModInst: @
+      ReactComponent = @ReactComponent
+      ReactComponent = react.getReactComponent ReactComponent if react.getReactComponent
+      ele = react.createElement.call react.React, ReactComponent,
+        moduleClassNames: @moduleClassNames
+        route: route
+        sbModInst: @
       @_reactComInst = react.render.call react.ReactDOM, ele, container
     else
       if @headerTpl
