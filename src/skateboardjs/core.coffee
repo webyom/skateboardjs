@@ -84,9 +84,10 @@ _switchNavTab = (modInst) ->
     $('app-nav [data-tab]', _container).removeClass 'active'
     $('app-nav [data-tab="' + tabName + '"]', _container).addClass 'active'
 
-_onAfterViewChange = (modName, modInst) ->
+_onAfterViewChange = (info, modInst) ->
+  info.toModInst = modInst
   if _opt.onAfterViewChange
-    _opt.onAfterViewChange modName, modInst
+    _opt.onAfterViewChange info
   else
     modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '__')
     bodyClassName = document.body.className.replace (/\bbody-sb-mod--\S+/), modClassName
@@ -377,20 +378,22 @@ core = $.extend $({}),
       toModName: modName
       fromMark: _currentMark
       toMark: mark
+      fromModInst: pModInst
+      toModInst: modInst
       params: params
       opt: opt.modOpt
-    return if _opt.onBeforeViewChange?(modName, modInst) is false
+    return if _opt.onBeforeViewChange?(_viewChangeInfo) is false
     if opt.useCache and modInst and modInst.isRenderred()
       if modName isnt pModName
         modInst.fadeIn pModInst, opt.from, pModInst?.fadeOut(modName, opt.from), ->
           _switchNavTab modInst
-          _onAfterViewChange modName, modInst
+          _onAfterViewChange _viewChangeInfo, modInst
           core.trigger 'afterViewChange', modInst
       return
     if mark is _currentMark and modName isnt 'alert'
       if modInst
         modInst.refresh()
-        _onAfterViewChange modName, modInst
+        _onAfterViewChange _viewChangeInfo, modInst
         core.trigger 'afterViewChange', modInst
       return
     _previousMark = _currentMark
@@ -404,7 +407,7 @@ core = $.extend $({}),
     and modName isnt 'alert' \
     and modName is pModName
       modInst.update mark, params, opt.modOpt
-      _onAfterViewChange modName, modInst
+      _onAfterViewChange _viewChangeInfo, modInst
       core.trigger 'afterViewChange', modInst
     else if modInst \
     and modInst.isRenderred() \
@@ -414,7 +417,7 @@ core = $.extend $({}),
     and _isSameParams modInst.getParams(), params
       modInst.fadeIn pModInst, opt.from, pModInst?.fadeOut(modName, opt.from), ->
         _switchNavTab modInst
-        _onAfterViewChange modName, modInst
+        _onAfterViewChange _viewChangeInfo, modInst
         core.trigger 'afterViewChange', modInst
     else
       _viewChangeInfo.loadFromModCache = false
@@ -439,7 +442,7 @@ core = $.extend $({}),
               if modInst
                 modInst._afterFadeIn pModInst
                 _switchNavTab modInst
-                _onAfterViewChange modName, modInst
+                _onAfterViewChange _viewChangeInfo, modInst
                 core.trigger 'afterViewChange', modInst
               else
                 contentDom.remove()

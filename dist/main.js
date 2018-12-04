@@ -218,10 +218,11 @@ _switchNavTab = function(modInst) {
   }
 };
 
-_onAfterViewChange = function(modName, modInst) {
+_onAfterViewChange = function(info, modInst) {
   var bodyClassName, modClassName;
+  info.toModInst = modInst;
   if (_opt.onAfterViewChange) {
-    return _opt.onAfterViewChange(modName, modInst);
+    return _opt.onAfterViewChange(info);
   } else {
     modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '__');
     bodyClassName = document.body.className.replace(/\bbody-sb-mod--\S+/, modClassName);
@@ -601,17 +602,19 @@ core = $.extend($({}), {
       toModName: modName,
       fromMark: _currentMark,
       toMark: mark,
+      fromModInst: pModInst,
+      toModInst: modInst,
       params: params,
       opt: opt.modOpt
     };
-    if ((typeof _opt.onBeforeViewChange === "function" ? _opt.onBeforeViewChange(modName, modInst) : void 0) === false) {
+    if ((typeof _opt.onBeforeViewChange === "function" ? _opt.onBeforeViewChange(_viewChangeInfo) : void 0) === false) {
       return;
     }
     if (opt.useCache && modInst && modInst.isRenderred()) {
       if (modName !== pModName) {
         modInst.fadeIn(pModInst, opt.from, pModInst != null ? pModInst.fadeOut(modName, opt.from) : void 0, function() {
           _switchNavTab(modInst);
-          _onAfterViewChange(modName, modInst);
+          _onAfterViewChange(_viewChangeInfo, modInst);
           return core.trigger('afterViewChange', modInst);
         });
       }
@@ -620,7 +623,7 @@ core = $.extend($({}), {
     if (mark === _currentMark && modName !== 'alert') {
       if (modInst) {
         modInst.refresh();
-        _onAfterViewChange(modName, modInst);
+        _onAfterViewChange(_viewChangeInfo, modInst);
         core.trigger('afterViewChange', modInst);
       }
       return;
@@ -633,12 +636,12 @@ core = $.extend($({}), {
     viewId = _viewId;
     if (modInst && modInst.isRenderred() && modName !== 'alert' && modName === pModName) {
       modInst.update(mark, params, opt.modOpt);
-      _onAfterViewChange(modName, modInst);
+      _onAfterViewChange(_viewChangeInfo, modInst);
       core.trigger('afterViewChange', modInst);
     } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (!modInst.viewed || _viewChangeInfo.from === 'history' || _opt.alwaysUseCache || modInst.alwaysUseCache) && _isSameParams(modInst.getParams(), params)) {
       modInst.fadeIn(pModInst, opt.from, pModInst != null ? pModInst.fadeOut(modName, opt.from) : void 0, function() {
         _switchNavTab(modInst);
-        _onAfterViewChange(modName, modInst);
+        _onAfterViewChange(_viewChangeInfo, modInst);
         return core.trigger('afterViewChange', modInst);
       });
     } else {
@@ -675,7 +678,7 @@ core = $.extend($({}), {
               if (modInst) {
                 modInst._afterFadeIn(pModInst);
                 _switchNavTab(modInst);
-                _onAfterViewChange(modName, modInst);
+                _onAfterViewChange(_viewChangeInfo, modInst);
                 core.trigger('afterViewChange', modInst);
               } else {
                 contentDom.remove();
