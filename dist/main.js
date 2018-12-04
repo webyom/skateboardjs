@@ -610,21 +610,11 @@ core = $.extend($({}), {
     if ((typeof _opt.onBeforeViewChange === "function" ? _opt.onBeforeViewChange(_viewChangeInfo) : void 0) === false) {
       return;
     }
-    if (opt.useCache && modInst && modInst.isRenderred()) {
-      if (modName !== pModName) {
-        modInst.fadeIn(pModInst, opt.from, pModInst != null ? pModInst.fadeOut(modName, opt.from) : void 0, function() {
-          _switchNavTab(modInst);
-          _onAfterViewChange(_viewChangeInfo, modInst);
-          return core.trigger('afterViewChange', modInst);
-        });
-      }
-      return;
-    }
     if (mark === _currentMark && modName !== 'alert') {
       if (modInst) {
         modInst.refresh();
         _onAfterViewChange(_viewChangeInfo, modInst);
-        core.trigger('afterViewChange', modInst);
+        core.trigger('afterViewChange', _viewChangeInfo);
       }
       return;
     }
@@ -637,12 +627,12 @@ core = $.extend($({}), {
     if (modInst && modInst.isRenderred() && modName !== 'alert' && modName === pModName) {
       modInst.update(mark, params, opt.modOpt);
       _onAfterViewChange(_viewChangeInfo, modInst);
-      core.trigger('afterViewChange', modInst);
-    } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (!modInst.viewed || _viewChangeInfo.from === 'history' || _opt.alwaysUseCache || modInst.alwaysUseCache) && _isSameParams(modInst.getParams(), params)) {
+      core.trigger('afterViewChange', _viewChangeInfo);
+    } else if (modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (!modInst.viewed || _viewChangeInfo.from === 'history' || _opt.alwaysUseCache || modInst.alwaysUseCache || opt.useCache) && _isSameParams(modInst.getParams(), params)) {
       modInst.fadeIn(pModInst, opt.from, pModInst != null ? pModInst.fadeOut(modName, opt.from) : void 0, function() {
         _switchNavTab(modInst);
         _onAfterViewChange(_viewChangeInfo, modInst);
-        return core.trigger('afterViewChange', modInst);
+        return core.trigger('afterViewChange', _viewChangeInfo);
       });
     } else {
       _viewChangeInfo.loadFromModCache = false;
@@ -679,7 +669,7 @@ core = $.extend($({}), {
                 modInst._afterFadeIn(pModInst);
                 _switchNavTab(modInst);
                 _onAfterViewChange(_viewChangeInfo, modInst);
-                core.trigger('afterViewChange', modInst);
+                core.trigger('afterViewChange', _viewChangeInfo);
               } else {
                 contentDom.remove();
               }

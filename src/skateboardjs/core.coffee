@@ -383,18 +383,11 @@ core = $.extend $({}),
       params: params
       opt: opt.modOpt
     return if _opt.onBeforeViewChange?(_viewChangeInfo) is false
-    if opt.useCache and modInst and modInst.isRenderred()
-      if modName isnt pModName
-        modInst.fadeIn pModInst, opt.from, pModInst?.fadeOut(modName, opt.from), ->
-          _switchNavTab modInst
-          _onAfterViewChange _viewChangeInfo, modInst
-          core.trigger 'afterViewChange', modInst
-      return
     if mark is _currentMark and modName isnt 'alert'
       if modInst
         modInst.refresh()
         _onAfterViewChange _viewChangeInfo, modInst
-        core.trigger 'afterViewChange', modInst
+        core.trigger 'afterViewChange', _viewChangeInfo
       return
     _previousMark = _currentMark
     _previousModName = _currentModName
@@ -408,17 +401,17 @@ core = $.extend $({}),
     and modName is pModName
       modInst.update mark, params, opt.modOpt
       _onAfterViewChange _viewChangeInfo, modInst
-      core.trigger 'afterViewChange', modInst
+      core.trigger 'afterViewChange', _viewChangeInfo
     else if modInst \
     and modInst.isRenderred() \
     and modName isnt 'alert' \
     and not opt.modOpt \
-    and (not modInst.viewed or _viewChangeInfo.from is 'history' or _opt.alwaysUseCache or modInst.alwaysUseCache) \
+    and (not modInst.viewed or _viewChangeInfo.from is 'history' or _opt.alwaysUseCache or modInst.alwaysUseCache or opt.useCache) \
     and _isSameParams modInst.getParams(), params
       modInst.fadeIn pModInst, opt.from, pModInst?.fadeOut(modName, opt.from), ->
         _switchNavTab modInst
         _onAfterViewChange _viewChangeInfo, modInst
-        core.trigger 'afterViewChange', modInst
+        core.trigger 'afterViewChange', _viewChangeInfo
     else
       _viewChangeInfo.loadFromModCache = false
       core.removeCache modName
@@ -443,7 +436,7 @@ core = $.extend $({}),
                 modInst._afterFadeIn pModInst
                 _switchNavTab modInst
                 _onAfterViewChange _viewChangeInfo, modInst
-                core.trigger 'afterViewChange', modInst
+                core.trigger 'afterViewChange', _viewChangeInfo
               else
                 contentDom.remove()
           else
