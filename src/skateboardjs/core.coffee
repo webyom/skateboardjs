@@ -86,17 +86,16 @@ _switchNavTab = (modInst) ->
 
 _onAfterViewChange = (info, modInst) ->
   info.toModInst = modInst
+  modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '__')
+  bodyClassName = document.body.className.replace (/\bbody-sb-mod--\S+/), modClassName
+  if (/\bsb-show-nav\b/).test bodyClassName
+    if not modInst.showNavTab
+      bodyClassName = bodyClassName.replace (/\s*\bsb-show-nav\b/), ''
+  else if modInst.showNavTab
+    bodyClassName = bodyClassName + ' sb-show-nav'
+  document.body.className = bodyClassName
   if _opt.onAfterViewChange
     _opt.onAfterViewChange info
-  else
-    modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '__')
-    bodyClassName = document.body.className.replace (/\bbody-sb-mod--\S+/), modClassName
-    if (/\bsb-show-nav\b/).test bodyClassName
-      if not modInst.showNavTab
-        bodyClassName = bodyClassName.replace (/\s*\bsb-show-nav\b/), ''
-    else if modInst.showNavTab
-      bodyClassName = bodyClassName + ' sb-show-nav'
-    document.body.className = bodyClassName
 
 _constructContentDom = (modName, params = {}, opt) ->
   if _opt.constructContentDom

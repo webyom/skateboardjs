@@ -221,19 +221,18 @@ _switchNavTab = function(modInst) {
 _onAfterViewChange = function(info, modInst) {
   var bodyClassName, modClassName;
   info.toModInst = modInst;
+  modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '__');
+  bodyClassName = document.body.className.replace(/\bbody-sb-mod--\S+/, modClassName);
+  if (/\bsb-show-nav\b/.test(bodyClassName)) {
+    if (!modInst.showNavTab) {
+      bodyClassName = bodyClassName.replace(/\s*\bsb-show-nav\b/, '');
+    }
+  } else if (modInst.showNavTab) {
+    bodyClassName = bodyClassName + ' sb-show-nav';
+  }
+  document.body.className = bodyClassName;
   if (_opt.onAfterViewChange) {
     return _opt.onAfterViewChange(info);
-  } else {
-    modClassName = 'body-sb-mod--' + modInst._modName.replace(/\//g, '__');
-    bodyClassName = document.body.className.replace(/\bbody-sb-mod--\S+/, modClassName);
-    if (/\bsb-show-nav\b/.test(bodyClassName)) {
-      if (!modInst.showNavTab) {
-        bodyClassName = bodyClassName.replace(/\s*\bsb-show-nav\b/, '');
-      }
-    } else if (modInst.showNavTab) {
-      bodyClassName = bodyClassName + ' sb-show-nav';
-    }
-    return document.body.className = bodyClassName;
   }
 };
 
