@@ -68,6 +68,8 @@ class BaseMod
 
   _afterFadeIn: (relModInst) ->
     @viewed = true
+    if @_reactComInst?.onSbFadeIn
+      @_reactComInst.onSbFadeIn relModInst
 
   _afterFadeOut: (relModName) ->
     @_ifNotCachable relModName, =>
@@ -124,8 +126,8 @@ class BaseMod
         opt: @_opt
       container = @_contentDom[0]
       if @isRenderred()
-        if @_reactComInst?.onSbModUpdate
-          @_reactComInst.onSbModUpdate route: route
+        if @_reactComInst?.onSbUpdate
+          @_reactComInst.onSbUpdate route: route
           return
         return if not react.unmountComponentAtNode
         react.unmountComponentAtNode.call react.ReactDOM, container

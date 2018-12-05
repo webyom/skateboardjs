@@ -1133,7 +1133,11 @@ BaseMod = (function() {
   };
 
   BaseMod.prototype._afterFadeIn = function(relModInst) {
-    return this.viewed = true;
+    var ref;
+    this.viewed = true;
+    if ((ref = this._reactComInst) != null ? ref.onSbFadeIn : void 0) {
+      return this._reactComInst.onSbFadeIn(relModInst);
+    }
   };
 
   BaseMod.prototype._afterFadeOut = function(relModName) {
@@ -1205,8 +1209,8 @@ BaseMod = (function() {
       };
       container = this._contentDom[0];
       if (this.isRenderred()) {
-        if ((ref = this._reactComInst) != null ? ref.onSbModUpdate : void 0) {
-          this._reactComInst.onSbModUpdate({
+        if ((ref = this._reactComInst) != null ? ref.onSbUpdate : void 0) {
+          this._reactComInst.onSbUpdate({
             route: route
           });
           return;
