@@ -1037,6 +1037,7 @@ BaseMod = (function() {
     this._params = params || {};
     this._opt = opt || {};
     this._onFirstRender = onFirstRender;
+    this._windowScrollTop = 0;
     this.init();
   }
 
@@ -1135,6 +1136,7 @@ BaseMod = (function() {
   BaseMod.prototype._afterFadeIn = function(relModInst) {
     var ref;
     this.viewed = true;
+    $(window).scrollTop(this._windowScrollTop);
     if ((ref = this._reactComInst) != null ? ref.onSbFadeIn : void 0) {
       return this._reactComInst.onSbFadeIn(relModInst);
     }
@@ -1345,6 +1347,7 @@ BaseMod = (function() {
   };
 
   BaseMod.prototype.fadeOut = function(relModName, from, animateType, cb) {
+    this._windowScrollTop = $(window).scrollTop();
     this._contentDom.attr('data-sb-scene', (parseInt(this._contentDom.attr('data-sb-scene')) || 0) + 1);
     this._ifNotCachable(relModName, (function(_this) {
       return function() {

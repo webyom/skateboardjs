@@ -12,6 +12,7 @@ class BaseMod
     @_params = params || {}
     @_opt = opt || {}
     @_onFirstRender = onFirstRender
+    @_windowScrollTop = 0
     @init()
 
   viewed: false
@@ -68,6 +69,7 @@ class BaseMod
 
   _afterFadeIn: (relModInst) ->
     @viewed = true
+    $(window).scrollTop @_windowScrollTop
     if @_reactComInst?.onSbFadeIn
       @_reactComInst.onSbFadeIn relModInst
 
@@ -216,6 +218,7 @@ class BaseMod
       cb?()
 
   fadeOut: (relModName, from, animateType, cb) ->
+    @_windowScrollTop = $(window).scrollTop()
     @_contentDom.attr 'data-sb-scene', (parseInt(@_contentDom.attr('data-sb-scene')) or 0) + 1
     @_ifNotCachable relModName, =>
       core.removeCache @_modName
