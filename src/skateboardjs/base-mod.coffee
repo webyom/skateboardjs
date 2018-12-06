@@ -1,4 +1,5 @@
 $ = require 'jquery'
+history = require './history.coffee'
 core = require './core.coffee'
 
 class BaseMod
@@ -186,6 +187,7 @@ class BaseMod
     @render()
 
   scrollToTop: ->
+    $(window).scrollTop 0
     dom = @$('.sb-mod__body')
     dom = @_contentDom if not dom.length
     dom.scrollTop 0
@@ -218,7 +220,10 @@ class BaseMod
       cb?()
 
   fadeOut: (relModName, from, animateType, cb) ->
-    @_windowScrollTop = $(window).scrollTop()
+    if @_mark is history.getMark()
+      @_windowScrollTop = $(window).scrollTop()
+    else
+      @_windowScrollTop = core.getModWindowScrollTop(@_modName) || 0
     @_contentDom.attr 'data-sb-scene', (parseInt(@_contentDom.attr('data-sb-scene')) or 0) + 1
     @_ifNotCachable relModName, =>
       core.removeCache @_modName

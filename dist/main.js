@@ -7,7 +7,7 @@
 		exports["Skateboard"] = factory(require("jquery"));
 	else
 		root["Skateboard"] = factory(root["$"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_1__) {
+})(this, function(__WEBPACK_EXTERNAL_MODULE_2__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -80,14 +80,16 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _getParamsObj, _getParamsStr, _init, _isElectron, _isSameOrigin, _isSameParams, _loadId, _modCache, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _requireMod, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core,
+var $, _constructContentDom, _container, _cssProps, _currentMark, _currentModName, _getParamsObj, _getParamsStr, _init, _isElectron, _isSameOrigin, _isSameParams, _loadId, _modCache, _modWindowScrollTop, _onAfterViewChange, _opt, _previousMark, _previousModName, _requestAnimationFrame, _requireMod, _scrollTop, _switchNavTab, _trimSlash, _viewChangeInfo, _viewId, ajaxHistory, core,
   hasProp = {}.hasOwnProperty;
 
-$ = __webpack_require__(1);
+$ = __webpack_require__(2);
 
-ajaxHistory = __webpack_require__(2);
+ajaxHistory = __webpack_require__(1);
 
 _modCache = {};
+
+_modWindowScrollTop = {};
 
 _currentMark = null;
 
@@ -326,6 +328,9 @@ _init = function() {
     modInst = _modCache[_currentModName];
     return modInst != null ? modInst.refresh() : void 0;
   });
+  $(window).on('scroll', function(evt) {
+    return _modWindowScrollTop[core.getCurrentModName()] = $(window).scrollTop();
+  });
   return _init = function() {};
 };
 
@@ -370,6 +375,9 @@ core = $.extend($({}), {
   },
   getCurrentModName: function() {
     return _currentModName;
+  },
+  getModWindowScrollTop: function(modName) {
+    return _modWindowScrollTop[modName];
   },
   getCached: function(modName) {
     return _modCache[modName];
@@ -886,17 +894,11 @@ module.exports = core;
 
 /***/ }),
 /* 1 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_1__;
-
-/***/ }),
-/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var $, _checkMark, _currentMark, _exclamationMark, _isSupportHistoryState, _isValidMark, _listener, _listenerBind, _previousMark, _updateCurrentMark, getMark, getPrevMark, init, isSupportHistoryState, push, setListener, setMark, to;
 
-$ = __webpack_require__(1);
+$ = __webpack_require__(2);
 
 _previousMark = void 0;
 
@@ -1014,14 +1016,22 @@ module.exports = {
 
 
 /***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_2__;
+
+/***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $, BaseMod, core,
+var $, BaseMod, core, history,
   hasProp = {}.hasOwnProperty,
   indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-$ = __webpack_require__(1);
+$ = __webpack_require__(2);
+
+history = __webpack_require__(1);
 
 core = __webpack_require__(0);
 
@@ -1294,6 +1304,7 @@ BaseMod = (function() {
 
   BaseMod.prototype.scrollToTop = function() {
     var dom;
+    $(window).scrollTop(0);
     dom = this.$('.sb-mod__body');
     if (!dom.length) {
       dom = this._contentDom;
@@ -1347,7 +1358,11 @@ BaseMod = (function() {
   };
 
   BaseMod.prototype.fadeOut = function(relModName, from, animateType, cb) {
-    this._windowScrollTop = $(window).scrollTop();
+    if (this._mark === history.getMark()) {
+      this._windowScrollTop = $(window).scrollTop();
+    } else {
+      this._windowScrollTop = core.getModWindowScrollTop(this._modName) || 0;
+    }
     this._contentDom.attr('data-sb-scene', (parseInt(this._contentDom.attr('data-sb-scene')) || 0) + 1);
     this._ifNotCachable(relModName, (function(_this) {
       return function() {
@@ -1421,7 +1436,7 @@ var BaseMod, core, history;
 
 core = __webpack_require__(0);
 
-history = __webpack_require__(2);
+history = __webpack_require__(1);
 
 BaseMod = __webpack_require__(3);
 

@@ -2,6 +2,7 @@ $ = require 'jquery'
 ajaxHistory = require './history.coffee'
 
 _modCache = {}
+_modWindowScrollTop = {}
 _currentMark = null
 _currentModName = ''
 _previousMark = null
@@ -162,6 +163,8 @@ _init = ->
   .on 'click', '[data-refresh-btn]', () ->
     modInst = _modCache[_currentModName]
     modInst?.refresh()
+  $(window).on 'scroll', (evt) ->
+    _modWindowScrollTop[core.getCurrentModName()] = $(window).scrollTop()
   _init = ->
 
 core = $.extend $({}),
@@ -195,6 +198,9 @@ core = $.extend $({}),
 
   getCurrentModName: () ->
     _currentModName
+
+  getModWindowScrollTop: (modName) ->
+    _modWindowScrollTop[modName]
 
   getCached: (modName) ->
     _modCache[modName]
