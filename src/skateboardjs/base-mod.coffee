@@ -14,6 +14,7 @@ class BaseMod
     @_opt = opt || {}
     @_onFirstRender = onFirstRender
     @_windowScrollTop = 0
+    core.setModWindowScrollTop modName, 0
     @init()
 
   viewed: false

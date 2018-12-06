@@ -329,7 +329,7 @@ _init = function() {
     return modInst != null ? modInst.refresh() : void 0;
   });
   $(window).on('scroll', function(evt) {
-    return _modWindowScrollTop[core.getCurrentModName()] = $(window).scrollTop();
+    return core.setModWindowScrollTop(core.getCurrentModName(), $(window).scrollTop());
   });
   return _init = function() {};
 };
@@ -376,11 +376,14 @@ core = $.extend($({}), {
   getCurrentModName: function() {
     return _currentModName;
   },
+  getCached: function(modName) {
+    return _modCache[modName];
+  },
   getModWindowScrollTop: function(modName) {
     return _modWindowScrollTop[modName];
   },
-  getCached: function(modName) {
-    return _modCache[modName];
+  setModWindowScrollTop: function(modName, scrollTop) {
+    return _modWindowScrollTop[modName] = scrollTop || 0;
   },
   removeCache: function(modName) {
     return _modCache[modName] = null;
@@ -1048,6 +1051,7 @@ BaseMod = (function() {
     this._opt = opt || {};
     this._onFirstRender = onFirstRender;
     this._windowScrollTop = 0;
+    core.setModWindowScrollTop(modName, 0);
     this.init();
   }
 

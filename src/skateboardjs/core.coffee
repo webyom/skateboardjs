@@ -164,7 +164,7 @@ _init = ->
     modInst = _modCache[_currentModName]
     modInst?.refresh()
   $(window).on 'scroll', (evt) ->
-    _modWindowScrollTop[core.getCurrentModName()] = $(window).scrollTop()
+    core.setModWindowScrollTop core.getCurrentModName(), $(window).scrollTop()
   _init = ->
 
 core = $.extend $({}),
@@ -199,11 +199,14 @@ core = $.extend $({}),
   getCurrentModName: () ->
     _currentModName
 
+  getCached: (modName) ->
+    _modCache[modName]
+
   getModWindowScrollTop: (modName) ->
     _modWindowScrollTop[modName]
 
-  getCached: (modName) ->
-    _modCache[modName]
+  setModWindowScrollTop: (modName, scrollTop) ->
+    _modWindowScrollTop[modName] = scrollTop || 0
 
   removeCache: (modName) ->
     _modCache[modName] = null
