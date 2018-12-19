@@ -211,6 +211,19 @@ core = $.extend $({}),
   removeCache: (modName) ->
     _modCache[modName] = null
 
+  destroyCache: (modName) ->
+    modInst = _modCache[modName]
+    if modInst
+      @removeCache modName
+      modInst.destroy()
+      $('[data-sb-mod="' + modName + '"]', _container).remove()
+    return
+
+  destroyAllCache: () ->
+    for modName of _modCache
+      @destroyCache modName
+    return
+
   fadeIn: (modInst, contentDom, relation, from, animateType, cb) ->
     fromHistory = from is 'history'
     _opt.onBeforeFadeIn? modInst
@@ -422,9 +435,7 @@ core = $.extend $({}),
         core.trigger 'afterViewChange', _viewChangeInfo
     else
       _viewChangeInfo.loadFromModCache = false
-      core.removeCache modName
-      modInst?.destroy()
-      $('[data-sb-mod="' + modName + '"]', _container).remove()
+      core.destroyCache modName
       loadMod = (modName, contentDom, params) ->
         _requireMod modName, (com) ->
           if viewId is _viewId and not _modCache[modName]
@@ -494,9 +505,7 @@ core = $.extend $({}),
     and _isSameParams modInst.getParams(), params
       onLoad?()
     else
-      core.removeCache modName
-      modInst?.destroy()
-      $('[data-sb-mod="' + modName + '"]', _container).remove()
+      core.destroyCache modName
       loadMod = (modName, contentDom, params) ->
         _requireMod modName, (com) ->
           if viewId is _viewId and loadId is _loadId and not _modCache[modName]

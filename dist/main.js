@@ -388,6 +388,21 @@ core = $.extend($({}), {
   removeCache: function(modName) {
     return _modCache[modName] = null;
   },
+  destroyCache: function(modName) {
+    var modInst;
+    modInst = _modCache[modName];
+    if (modInst) {
+      this.removeCache(modName);
+      modInst.destroy();
+      $('[data-sb-mod="' + modName + '"]', _container).remove();
+    }
+  },
+  destroyAllCache: function() {
+    var modName;
+    for (modName in _modCache) {
+      this.destroyCache(modName);
+    }
+  },
   fadeIn: function(modInst, contentDom, relation, from, animateType, cb) {
     var callback, cssObj, duration, fromHistory, percentage, ref, ref1, ref2, ref3, res, sd, ttf;
     fromHistory = from === 'history';
@@ -646,11 +661,7 @@ core = $.extend($({}), {
       });
     } else {
       _viewChangeInfo.loadFromModCache = false;
-      core.removeCache(modName);
-      if (modInst != null) {
-        modInst.destroy();
-      }
-      $('[data-sb-mod="' + modName + '"]', _container).remove();
+      core.destroyCache(modName);
       loadMod = function(modName, contentDom, params) {
         return _requireMod(modName, function(com) {
           var e;
@@ -752,11 +763,7 @@ core = $.extend($({}), {
     if (modName === _currentModName || modInst && modInst.isRenderred() && modName !== 'alert' && !opt.modOpt && (_opt.alwaysUseCache || modInst.alwaysUseCache) && _isSameParams(modInst.getParams(), params)) {
       return typeof onLoad === "function" ? onLoad() : void 0;
     } else {
-      core.removeCache(modName);
-      if (modInst != null) {
-        modInst.destroy();
-      }
-      $('[data-sb-mod="' + modName + '"]', _container).remove();
+      core.destroyCache(modName);
       loadMod = function(modName, contentDom, params) {
         return _requireMod(modName, function(com) {
           var e;
