@@ -219,9 +219,9 @@ core = $.extend $({}),
       $('[data-sb-mod="' + modName + '"]', _container).remove()
     return
 
-  destroyAllCache: () ->
+  destroyAllCache: (filter) ->
     for modName of _modCache
-      @destroyCache modName
+      @destroyCache modName if filter?(modName) isnt false
     return
 
   fadeIn: (modInst, contentDom, relation, from, animateType, cb) ->

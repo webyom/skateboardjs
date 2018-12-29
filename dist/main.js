@@ -397,10 +397,12 @@ core = $.extend($({}), {
       $('[data-sb-mod="' + modName + '"]', _container).remove();
     }
   },
-  destroyAllCache: function() {
+  destroyAllCache: function(filter) {
     var modName;
     for (modName in _modCache) {
-      this.destroyCache(modName);
+      if ((typeof filter === "function" ? filter(modName) : void 0) !== false) {
+        this.destroyCache(modName);
+      }
     }
   },
   fadeIn: function(modInst, contentDom, relation, from, animateType, cb) {
