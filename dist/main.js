@@ -622,6 +622,7 @@ core = $.extend($({}), {
     modName = modName || _opt.defaultModName;
     modInst = _modCache[modName];
     _viewChangeInfo = {
+      time: new Date().getTime(),
       from: opt.from || 'api',
       scrollTop: $(window).scrollTop(),
       loadFromModCache: true,
