@@ -187,7 +187,7 @@ _getParamsObj = function(paramsStr) {
       for (i = 0, len = ref.length; i < len; i++) {
         tmp = ref[i];
         tmp = tmp.split('=');
-        params[tmp[0]] = tmp[1];
+        params[tmp[0]] = decodeURIComponent(tmp[1]);
       }
     } else {
       for (key in paramsStr) {

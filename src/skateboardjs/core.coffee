@@ -66,7 +66,7 @@ _getParamsObj = (paramsStr) ->
     if type is 'string'
       for tmp in paramsStr.split '&'
         tmp = tmp.split '='
-        params[tmp[0]] = tmp[1]
+        params[tmp[0]] = decodeURIComponent tmp[1]
     else
       for own key, val of paramsStr
         params[key] = val if typeof val is 'string'
