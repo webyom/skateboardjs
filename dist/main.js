@@ -416,7 +416,7 @@ core = $.extend($({}), {
     } else {
       res = '';
       animateType = animateType || (!fromHistory || !((ref = _opt.animate) != null ? ref.skipFromHistory : void 0)) && ((ref1 = _opt.animate) != null ? ref1.type : void 0) || '';
-      ttf = ((ref2 = _opt.animate) != null ? ref2.timingFunction : void 0) || 'linear';
+      ttf = ((ref2 = _opt.animate) != null ? ref2.timingFunction : void 0) || 'ease-out';
       duration = ((ref3 = _opt.animate) != null ? ref3.duration : void 0) || 300;
       callback = function() {
         if (animateType === 'slide') {
@@ -429,92 +429,58 @@ core = $.extend($({}), {
         }
         return typeof cb === "function" ? cb() : void 0;
       };
-      if (animateType === 'fade' || animateType === 'fadeIn') {
-        if (_cssProps) {
-          cssObj = {
-            opacity: '0'
-          };
-          cssObj[_cssProps[1]] = 'none';
-          cssObj[_cssProps[2]] = 'translateZ(0)';
-          contentDom.css(cssObj).show();
-          contentDom[0].offsetTop;
-          _requestAnimationFrame(function() {
-            cssObj = {};
-            cssObj[_cssProps[1]] = "opacity " + (duration / 1000) + "s " + ttf;
-            cssObj['opacity'] = '1';
-            contentDom.one(_cssProps[0], callback);
-            return contentDom.css(cssObj);
-          });
-        } else {
-          contentDom.css({
-            opacity: '0'
-          });
-          contentDom.show();
-          _requestAnimationFrame(function() {
-            return contentDom.animate({
-              opacity: '1'
-            }, duration, ttf, callback);
-          });
-        }
-      } else if (animateType === 'slide' && relation !== 'tab') {
-        sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
-        percentage = Math.min(Math.max(0, ((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0) || 30), 100);
-        if (_cssProps) {
+      if (_cssProps && (animateType === 'fade' || animateType === 'fadeIn')) {
+        cssObj = {
+          opacity: '0'
+        };
+        cssObj[_cssProps[1]] = 'none';
+        cssObj[_cssProps[2]] = 'translateZ(0)';
+        contentDom.css(cssObj).show();
+        contentDom[0].offsetTop;
+        _requestAnimationFrame(function() {
           cssObj = {};
-          cssObj[_cssProps[1]] = 'none';
-          if (sd === 'vu' || sd === 'vd') {
-            cssObj.zIndex = '3';
-            cssObj[_cssProps[2]] = 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)';
-          } else {
-            cssObj.zIndex = fromHistory ? '1' : '3';
-            cssObj[_cssProps[2]] = 'translate3d(' + (fromHistory ? '-' + percentage : '100') + '%, 0, 0)';
-          }
-          contentDom.css(cssObj).show();
-          contentDom[0].offsetTop;
-          _requestAnimationFrame(function() {
-            cssObj = {};
-            cssObj[_cssProps[1]] = _cssProps[2] + " " + (duration / 1000) + "s " + ttf;
-            cssObj[_cssProps[2]] = 'translate3d(0, 0, 0)';
-            contentDom.one(_cssProps[0], callback);
-            return contentDom.css(cssObj);
+          cssObj[_cssProps[1]] = "opacity " + (duration / 1000) + "s " + ttf;
+          cssObj['opacity'] = '1';
+          contentDom.one(_cssProps[0], function() {
+            contentDom.attr('data-fade', '1');
+            return callback();
           });
+          return contentDom.css(cssObj);
+        });
+      } else if (_cssProps && animateType === 'slide' && relation !== 'tab') {
+        sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
+        percentage = Math.min(Math.max(0, ((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0) || 25), 100);
+        cssObj = {};
+        cssObj[_cssProps[1]] = 'none';
+        if (sd === 'vu' || sd === 'vd') {
+          cssObj.zIndex = '3';
+          cssObj[_cssProps[2]] = 'translate3d(0, ' + (sd === 'vd' ? '-' : '') + '100%, 0)';
         } else {
-          if (sd === 'vu' || sd === 'vd') {
-            contentDom.css({
-              zIndex: '3',
-              left: '0',
-              top: (sd === 'vd' ? '-' : '') + '100%'
-            });
-          } else {
-            contentDom.css({
-              zIndex: fromHistory ? '1' : '3',
-              left: (fromHistory ? '-' + percentage : '100') + '%',
-              top: '0'
-            });
-          }
-          contentDom.show();
-          _requestAnimationFrame(function() {
-            return contentDom.animate({
-              left: '0',
-              top: '0'
-            }, duration, ttf, callback);
-          });
+          cssObj.zIndex = fromHistory ? '1' : '3';
+          cssObj[_cssProps[2]] = 'translate3d(' + (fromHistory ? '-' + percentage : '100') + '%, 0, 0)';
         }
+        contentDom.css(cssObj).show();
+        contentDom[0].offsetTop;
+        _requestAnimationFrame(function() {
+          cssObj = {};
+          cssObj[_cssProps[1]] = _cssProps[2] + " " + (duration / 1000) + "s " + ttf;
+          cssObj[_cssProps[2]] = 'translate3d(0, 0, 0)';
+          contentDom.one(_cssProps[0], function() {
+            contentDom.attr('data-fade', '1');
+            return callback();
+          });
+          return contentDom.css(cssObj);
+        });
       } else {
-        if (_cssProps) {
+        if (_cssProps && contentDom.attr('data-fade')) {
           cssObj = {
             'opacity': '1'
           };
           cssObj[_cssProps[1]] = 'none';
           cssObj[_cssProps[2]] = 'none';
-        } else {
-          cssObj = {
-            'opacity': '1',
-            'top': '0',
-            'left': '0'
-          };
+          contentDom.css(cssObj);
         }
-        contentDom.css(cssObj).show();
+        contentDom.show();
         callback();
       }
       return res;
@@ -531,7 +497,7 @@ core = $.extend($({}), {
     } else {
       res = '';
       animateType = animateType || (!fromHistory || !((ref = _opt.animate) != null ? ref.skipFromHistory : void 0)) && ((ref1 = _opt.animate) != null ? ref1.type : void 0) || '';
-      ttf = ((ref2 = _opt.animate) != null ? ref2.timingFunction : void 0) || 'linear';
+      ttf = ((ref2 = _opt.animate) != null ? ref2.timingFunction : void 0) || 'ease-out';
       duration = ((ref3 = _opt.animate) != null ? ref3.duration : void 0) || 300;
       callback = function() {
         if (contentDom.attr('data-sb-mod') !== _currentModName) {
@@ -539,65 +505,44 @@ core = $.extend($({}), {
         }
         return typeof cb === "function" ? cb() : void 0;
       };
-      if (animateType === 'fade') {
-        if (_cssProps) {
-          _requestAnimationFrame(function() {
-            var cssObj;
-            cssObj = {};
-            cssObj[_cssProps[1]] = "opacity " + (duration / 1000) + "s " + ttf;
-            cssObj[_cssProps[2]] = 'translateZ(0)';
-            cssObj['opacity'] = '0';
-            contentDom.one(_cssProps[0], callback);
-            return contentDom.css(cssObj);
+      if (_cssProps && animateType === 'fade') {
+        _requestAnimationFrame(function() {
+          var cssObj;
+          cssObj = {};
+          cssObj[_cssProps[1]] = "opacity " + (duration / 1000) + "s " + ttf;
+          cssObj[_cssProps[2]] = 'translateZ(0)';
+          cssObj['opacity'] = '0';
+          contentDom.one(_cssProps[0], function() {
+            contentDom.attr('data-fade', '1');
+            return callback();
           });
-        } else {
-          _requestAnimationFrame(function() {
-            return contentDom.animate({
-              opacity: '0'
-            }, duration, ttf, callback);
-          });
-        }
-      } else if (animateType === 'slide' && relation !== 'tab') {
+          return contentDom.css(cssObj);
+        });
+      } else if (_cssProps && animateType === 'slide' && relation !== 'tab') {
         sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
         zIndex = '2';
-        percentage = Math.min(Math.max(0, ((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0) || 30), 100);
+        percentage = Math.min(Math.max(0, ((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0) || 25), 100);
         if (sd === 'vu' || sd === 'vd') {
           res = 'fade';
           zIndex = '4';
         }
-        if (_cssProps) {
-          _requestAnimationFrame(function() {
-            var cssObj;
-            cssObj = {
-              zIndex: zIndex
-            };
-            cssObj[_cssProps[1]] = _cssProps[2] + " " + (duration / 1000) + "s " + ttf;
-            if (sd === 'vu' || sd === 'vd') {
-              cssObj[_cssProps[2]] = 'translate3d(0, ' + (sd === 'vd' ? -100 : 100) + '%, 0)';
-            } else {
-              cssObj[_cssProps[2]] = 'translate3d(' + (fromHistory ? '100' : '-' + percentage) + '%, 0, 0)';
-            }
-            contentDom.one(_cssProps[0], callback);
-            return contentDom.css(cssObj);
+        _requestAnimationFrame(function() {
+          var cssObj;
+          cssObj = {
+            zIndex: zIndex
+          };
+          cssObj[_cssProps[1]] = _cssProps[2] + " " + (duration / 1000) + "s " + ttf;
+          if (sd === 'vu' || sd === 'vd') {
+            cssObj[_cssProps[2]] = 'translate3d(0, ' + (sd === 'vd' ? -100 : 100) + '%, 0)';
+          } else {
+            cssObj[_cssProps[2]] = 'translate3d(' + (fromHistory ? '100' : '-' + percentage) + '%, 0, 0)';
+          }
+          contentDom.one(_cssProps[0], function() {
+            contentDom.attr('data-fade', '1');
+            return callback();
           });
-        } else {
-          contentDom.css({
-            zIndex: zIndex,
-            left: '0',
-            top: '0'
-          });
-          _requestAnimationFrame(function() {
-            if (sd === 'vu' || sd === 'vd') {
-              return contentDom.animate({
-                top: (sd === 'vd' ? -100 : 100) + '%'
-              }, duration, ttf, callback);
-            } else {
-              return contentDom.animate({
-                left: (fromHistory ? '100' : '-' + percentage) + '%'
-              }, duration, ttf, callback);
-            }
-          });
-        }
+          return contentDom.css(cssObj);
+        });
       } else {
         callback();
       }

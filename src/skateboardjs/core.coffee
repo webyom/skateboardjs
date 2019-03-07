@@ -232,7 +232,7 @@ core = $.extend $({}),
     else
       res = ''
       animateType = animateType || (not fromHistory or not _opt.animate?.skipFromHistory) && _opt.animate?.type || ''
-      ttf = _opt.animate?.timingFunction || 'linear'
+      ttf = _opt.animate?.timingFunction || 'ease-out'
       duration = _opt.animate?.duration || 300
       callback = ->
         if animateType is 'slide'
@@ -241,73 +241,49 @@ core = $.extend $({}),
           contentDom.css
             zIndex: '3'
         cb?()
-      if animateType in ['fade', 'fadeIn']
-        if _cssProps
-          cssObj =
-            opacity: '0'
-          cssObj[_cssProps[1]] = 'none'
-          cssObj[_cssProps[2]] = 'translateZ(0)'
-          contentDom.css(cssObj).show()
-          contentDom[0].offsetTop
-          _requestAnimationFrame ->
-            cssObj = {}
-            cssObj[_cssProps[1]] = "opacity #{duration / 1000}s #{ttf}"
-            cssObj['opacity'] = '1'
-            contentDom.one _cssProps[0], callback
-            contentDom.css cssObj
-        else
-          contentDom.css
-            opacity: '0'
-          contentDom.show()
-          _requestAnimationFrame ->
-            contentDom.animate
-              opacity: '1'
-            , duration, ttf, callback
-      else if animateType is 'slide' and relation isnt 'tab'
-        sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
-        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent || 30), 100
-        if _cssProps
+      if _cssProps and animateType in ['fade', 'fadeIn']
+        cssObj =
+          opacity: '0'
+        cssObj[_cssProps[1]] = 'none'
+        cssObj[_cssProps[2]] = 'translateZ(0)'
+        contentDom.css(cssObj).show()
+        contentDom[0].offsetTop
+        _requestAnimationFrame ->
           cssObj = {}
-          cssObj[_cssProps[1]] = 'none'
-          if sd in ['vu', 'vd']
-            cssObj.zIndex = '3'
-            cssObj[_cssProps[2]] = 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
-          else
-            cssObj.zIndex = if fromHistory then '1' else '3'
-            cssObj[_cssProps[2]] = 'translate3d(' + (if fromHistory then ('-' + percentage) else '100') + '%, 0, 0)'
-          contentDom.css(cssObj).show()
-          contentDom[0].offsetTop
-          _requestAnimationFrame ->
-            cssObj = {}
-            cssObj[_cssProps[1]] = "#{_cssProps[2]} #{duration / 1000}s #{ttf}"
-            cssObj[_cssProps[2]] = 'translate3d(0, 0, 0)'
-            contentDom.one _cssProps[0], callback
-            contentDom.css cssObj
+          cssObj[_cssProps[1]] = "opacity #{duration / 1000}s #{ttf}"
+          cssObj['opacity'] = '1'
+          contentDom.one _cssProps[0], () ->
+            contentDom.attr 'data-fade', '1'
+            callback()
+          contentDom.css cssObj
+      else if _cssProps and animateType is 'slide' and relation isnt 'tab'
+        sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
+        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent || 25), 100
+        cssObj = {}
+        cssObj[_cssProps[1]] = 'none'
+        if sd in ['vu', 'vd']
+          cssObj.zIndex = '3'
+          cssObj[_cssProps[2]] = 'translate3d(0, ' + (if sd is 'vd' then '-' else '') + '100%, 0)'
         else
-          if sd in ['vu', 'vd']
-            contentDom.css
-              zIndex: '3'
-              left: '0'
-              top: (if sd is 'vd' then '-' else '') + '100%'
-          else
-            contentDom.css
-              zIndex: if fromHistory then '1' else '3'
-              left: (if fromHistory then ('-' + percentage) else '100') + '%'
-              top: '0'
-          contentDom.show()
-          _requestAnimationFrame ->
-            contentDom.animate
-              left: '0'
-              top: '0'
-            , duration, ttf, callback
+          cssObj.zIndex = if fromHistory then '1' else '3'
+          cssObj[_cssProps[2]] = 'translate3d(' + (if fromHistory then ('-' + percentage) else '100') + '%, 0, 0)'
+        contentDom.css(cssObj).show()
+        contentDom[0].offsetTop
+        _requestAnimationFrame ->
+          cssObj = {}
+          cssObj[_cssProps[1]] = "#{_cssProps[2]} #{duration / 1000}s #{ttf}"
+          cssObj[_cssProps[2]] = 'translate3d(0, 0, 0)'
+          contentDom.one _cssProps[0], () ->
+            contentDom.attr 'data-fade', '1'
+            callback()
+          contentDom.css cssObj
       else
-        if _cssProps
+        if _cssProps and contentDom.attr('data-fade')
           cssObj = {'opacity': '1'}
           cssObj[_cssProps[1]] = 'none'
           cssObj[_cssProps[2]] = 'none'
-        else
-          cssObj = {'opacity': '1', 'top': '0', 'left': '0'}
-        contentDom.css(cssObj).show()
+          contentDom.css(cssObj)
+        contentDom.show()
         callback()
       res
 
@@ -319,57 +295,40 @@ core = $.extend $({}),
     else
       res = ''
       animateType = animateType || (not fromHistory or not _opt.animate?.skipFromHistory) && _opt.animate?.type || ''
-      ttf = _opt.animate?.timingFunction || 'linear'
+      ttf = _opt.animate?.timingFunction || 'ease-out'
       duration = _opt.animate?.duration || 300
       callback = ->
         contentDom.hide() if contentDom.attr('data-sb-mod') isnt _currentModName
         cb?()
-      if animateType is 'fade'
-        if _cssProps
-          _requestAnimationFrame ->
-            cssObj = {}
-            cssObj[_cssProps[1]] = "opacity #{duration / 1000}s #{ttf}"
-            cssObj[_cssProps[2]] = 'translateZ(0)'
-            cssObj['opacity'] = '0'
-            contentDom.one _cssProps[0], callback
-            contentDom.css cssObj
-        else
-          _requestAnimationFrame ->
-            contentDom.animate
-              opacity: '0'
-            , duration, ttf, callback
-      else if animateType is 'slide' and relation isnt 'tab'
+      if _cssProps and animateType is 'fade'
+        _requestAnimationFrame ->
+          cssObj = {}
+          cssObj[_cssProps[1]] = "opacity #{duration / 1000}s #{ttf}"
+          cssObj[_cssProps[2]] = 'translateZ(0)'
+          cssObj['opacity'] = '0'
+          contentDom.one _cssProps[0], () ->
+            contentDom.attr 'data-fade', '1'
+            callback()
+          contentDom.css cssObj
+      else if _cssProps and animateType is 'slide' and relation isnt 'tab'
         sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
         zIndex = '2'
-        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent || 30), 100
+        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent || 25), 100
         if sd in ['vu', 'vd']
           res = 'fade'
           zIndex = '4'
-        if _cssProps
-          _requestAnimationFrame ->
-            cssObj =
-              zIndex: zIndex
-            cssObj[_cssProps[1]] = "#{_cssProps[2]} #{duration / 1000}s #{ttf}"
-            if sd in ['vu', 'vd']
-              cssObj[_cssProps[2]] = 'translate3d(0, ' + (if sd is 'vd' then -100 else 100) + '%, 0)'
-            else
-              cssObj[_cssProps[2]] = 'translate3d(' + (if fromHistory then '100' else ('-' + percentage)) + '%, 0, 0)'
-            contentDom.one _cssProps[0], callback
-            contentDom.css cssObj
-        else
-          contentDom.css
+        _requestAnimationFrame ->
+          cssObj =
             zIndex: zIndex
-            left: '0'
-            top: '0'
-          _requestAnimationFrame ->
-            if sd in ['vu', 'vd']
-              contentDom.animate
-                top: (if sd is 'vd' then -100 else 100) + '%'
-              , duration, ttf, callback
-            else
-              contentDom.animate
-                left: (if fromHistory then '100' else ('-' + percentage)) + '%'
-              , duration, ttf, callback
+          cssObj[_cssProps[1]] = "#{_cssProps[2]} #{duration / 1000}s #{ttf}"
+          if sd in ['vu', 'vd']
+            cssObj[_cssProps[2]] = 'translate3d(0, ' + (if sd is 'vd' then -100 else 100) + '%, 0)'
+          else
+            cssObj[_cssProps[2]] = 'translate3d(' + (if fromHistory then '100' else ('-' + percentage)) + '%, 0, 0)'
+          contentDom.one _cssProps[0], () ->
+            contentDom.attr 'data-fade', '1'
+            callback()
+          contentDom.css cssObj
       else
         callback()
       res
