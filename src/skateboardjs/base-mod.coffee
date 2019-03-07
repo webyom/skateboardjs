@@ -44,30 +44,10 @@ class BaseMod
 
   _ifNotCachable: (relModName, callback, elseCallback) ->
     cachable = if typeof @cachable isnt 'undefined' then @cachable else core.modCacheable()
-    if typeof cachable isnt 'undefined'
-      if cachable
-        elseCallback?()
-      else
-        callback?()
+    if cachable
+      elseCallback?()
     else
-      relModInst = core.getCached(relModName)
-      if relModInst
-        if not relModInst.hasParent @_modName
-          callback?()
-        else
-          elseCallback?()
-      else
-        window.require [core.getModBase() + relModName + '/main'], (com) =>
-          relModInst = new com.Mod relModName, relModName
-          if not relModInst.hasParent @_modName
-            callback?()
-          else
-            elseCallback?()
-        , =>
-          if relModName.indexOf(@_modName + '/') isnt 0
-            callback?()
-          else
-            elseCallback?()
+      callback?()
 
   _afterFadeIn: (relModInst) ->
     @viewed = true

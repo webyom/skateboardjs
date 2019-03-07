@@ -265,7 +265,7 @@ core = $.extend $({}),
             , duration, ttf, callback
       else if animateType is 'slide' and relation isnt 'tab'
         sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
-        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent), 100
+        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent || 30), 100
         if _cssProps
           cssObj = {}
           cssObj[_cssProps[1]] = 'none'
@@ -335,7 +335,7 @@ core = $.extend $({}),
       else if animateType is 'slide' and relation isnt 'tab'
         sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
         zIndex = '2'
-        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent), 100
+        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent || 30), 100
         if sd in ['vu', 'vd']
           res = 'fade'
           zIndex = '4'
@@ -479,8 +479,8 @@ core = $.extend $({}),
           $(_opt.initContentDom).remove()
           _opt.initContentDom = null
         contentDom = _constructContentDom(modName, params, opt.modOpt)
-        core.fadeIn null, contentDom, pModInst?.getRelation(modName), opt.from, pModInst?.fadeOut(modName, opt.from), ->
-          loadMod modName, contentDom, params
+        core.fadeIn null, contentDom, pModInst?.getRelation(modName), opt.from, pModInst?.fadeOut(modName, opt.from)
+        loadMod modName, contentDom, params
     ajaxHistory.setMark(mark, replaceState: opt.replaceState) if not opt.holdMark
 
   load: (mark, opt, onLoad) ->

@@ -458,7 +458,7 @@ core = $.extend($({}), {
         }
       } else if (animateType === 'slide' && relation !== 'tab') {
         sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
-        percentage = Math.min(Math.max(0, (ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0), 100);
+        percentage = Math.min(Math.max(0, ((ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0) || 30), 100);
         if (_cssProps) {
           cssObj = {};
           cssObj[_cssProps[1]] = 'none';
@@ -547,7 +547,7 @@ core = $.extend($({}), {
       } else if (animateType === 'slide' && relation !== 'tab') {
         sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
         zIndex = '2';
-        percentage = Math.min(Math.max(0, (ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0), 100);
+        percentage = Math.min(Math.max(0, ((ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0) || 30), 100);
         if (sd === 'vu' || sd === 'vd') {
           res = 'fade';
           zIndex = '4';
@@ -732,9 +732,8 @@ core = $.extend($({}), {
           _opt.initContentDom = null;
         }
         contentDom = _constructContentDom(modName, params, opt.modOpt);
-        core.fadeIn(null, contentDom, pModInst != null ? pModInst.getRelation(modName) : void 0, opt.from, pModInst != null ? pModInst.fadeOut(modName, opt.from) : void 0, function() {
-          return loadMod(modName, contentDom, params);
-        });
+        core.fadeIn(null, contentDom, pModInst != null ? pModInst.getRelation(modName) : void 0, opt.from, pModInst != null ? pModInst.fadeOut(modName, opt.from) : void 0);
+        loadMod(modName, contentDom, params);
       }
     }
     if (!opt.holdMark) {
@@ -1118,42 +1117,12 @@ BaseMod = (function() {
   };
 
   BaseMod.prototype._ifNotCachable = function(relModName, callback, elseCallback) {
-    var cachable, relModInst;
+    var cachable;
     cachable = typeof this.cachable !== 'undefined' ? this.cachable : core.modCacheable();
-    if (typeof cachable !== 'undefined') {
-      if (cachable) {
-        return typeof elseCallback === "function" ? elseCallback() : void 0;
-      } else {
-        return typeof callback === "function" ? callback() : void 0;
-      }
+    if (cachable) {
+      return typeof elseCallback === "function" ? elseCallback() : void 0;
     } else {
-      relModInst = core.getCached(relModName);
-      if (relModInst) {
-        if (!relModInst.hasParent(this._modName)) {
-          return typeof callback === "function" ? callback() : void 0;
-        } else {
-          return typeof elseCallback === "function" ? elseCallback() : void 0;
-        }
-      } else {
-        return window.require([core.getModBase() + relModName + '/main'], (function(_this) {
-          return function(com) {
-            relModInst = new com.Mod(relModName, relModName);
-            if (!relModInst.hasParent(_this._modName)) {
-              return typeof callback === "function" ? callback() : void 0;
-            } else {
-              return typeof elseCallback === "function" ? elseCallback() : void 0;
-            }
-          };
-        })(this), (function(_this) {
-          return function() {
-            if (relModName.indexOf(_this._modName + '/') !== 0) {
-              return typeof callback === "function" ? callback() : void 0;
-            } else {
-              return typeof elseCallback === "function" ? elseCallback() : void 0;
-            }
-          };
-        })(this));
-      }
+      return typeof callback === "function" ? callback() : void 0;
     }
   };
 
