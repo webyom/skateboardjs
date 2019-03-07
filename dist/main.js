@@ -406,7 +406,7 @@ core = $.extend($({}), {
     }
   },
   fadeIn: function(modInst, contentDom, relation, from, animateType, cb) {
-    var callback, cssObj, duration, fromHistory, percentage, ref, ref1, ref2, ref3, res, sd, ttf;
+    var callback, cssObj, duration, fromHistory, percentage, ref, ref1, ref2, ref3, ref4, res, sd, ttf;
     fromHistory = from === 'history';
     if (typeof _opt.onBeforeFadeIn === "function") {
       _opt.onBeforeFadeIn(modInst);
@@ -415,9 +415,9 @@ core = $.extend($({}), {
       return _opt.fadeIn(modInst, contentDom, relation, from, animateType, cb);
     } else {
       res = '';
-      animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
-      ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
-      duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
+      animateType = animateType || (!fromHistory || !((ref = _opt.animate) != null ? ref.skipFromHistory : void 0)) && ((ref1 = _opt.animate) != null ? ref1.type : void 0) || '';
+      ttf = ((ref2 = _opt.animate) != null ? ref2.timingFunction : void 0) || 'linear';
+      duration = ((ref3 = _opt.animate) != null ? ref3.duration : void 0) || 300;
       callback = function() {
         if (animateType === 'slide') {
           $('.sb-mod').css({
@@ -458,7 +458,7 @@ core = $.extend($({}), {
         }
       } else if (animateType === 'slide' && relation !== 'tab') {
         sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
-        percentage = Math.min(Math.max(0, ((ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0) || 30), 100);
+        percentage = Math.min(Math.max(0, ((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0) || 30), 100);
         if (_cssProps) {
           cssObj = {};
           cssObj[_cssProps[1]] = 'none';
@@ -501,14 +501,27 @@ core = $.extend($({}), {
           });
         }
       } else {
-        contentDom.show();
+        if (_cssProps) {
+          cssObj = {
+            'opacity': '1'
+          };
+          cssObj[_cssProps[1]] = 'none';
+          cssObj[_cssProps[2]] = 'none';
+        } else {
+          cssObj = {
+            'opacity': '1',
+            'top': '0',
+            'left': '0'
+          };
+        }
+        contentDom.css(cssObj).show();
         callback();
       }
       return res;
     }
   },
   fadeOut: function(modInst, contentDom, relation, from, animateType, cb) {
-    var callback, duration, fromHistory, percentage, ref, ref1, ref2, ref3, res, sd, ttf, zIndex;
+    var callback, duration, fromHistory, percentage, ref, ref1, ref2, ref3, ref4, res, sd, ttf, zIndex;
     fromHistory = from === 'history';
     if (typeof _opt.onBeforeFadeOut === "function") {
       _opt.onBeforeFadeOut(modInst);
@@ -517,9 +530,9 @@ core = $.extend($({}), {
       return _opt.fadeOut(modInst, contentDom, relation, from, animateType, cb);
     } else {
       res = '';
-      animateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0);
-      ttf = ((ref1 = _opt.animate) != null ? ref1.timingFunction : void 0) || 'linear';
-      duration = ((ref2 = _opt.animate) != null ? ref2.duration : void 0) || 300;
+      animateType = animateType || (!fromHistory || !((ref = _opt.animate) != null ? ref.skipFromHistory : void 0)) && ((ref1 = _opt.animate) != null ? ref1.type : void 0) || '';
+      ttf = ((ref2 = _opt.animate) != null ? ref2.timingFunction : void 0) || 'linear';
+      duration = ((ref3 = _opt.animate) != null ? ref3.duration : void 0) || 300;
       callback = function() {
         if (contentDom.attr('data-sb-mod') !== _currentModName) {
           contentDom.hide();
@@ -547,7 +560,7 @@ core = $.extend($({}), {
       } else if (animateType === 'slide' && relation !== 'tab') {
         sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
         zIndex = '2';
-        percentage = Math.min(Math.max(0, ((ref3 = _opt.animate) != null ? ref3.slideOutPercent : void 0) || 30), 100);
+        percentage = Math.min(Math.max(0, ((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0) || 30), 100);
         if (sd === 'vu' || sd === 'vd') {
           res = 'fade';
           zIndex = '4';

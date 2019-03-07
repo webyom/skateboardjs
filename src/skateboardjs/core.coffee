@@ -231,7 +231,7 @@ core = $.extend $({}),
       _opt.fadeIn modInst, contentDom, relation, from, animateType, cb
     else
       res = ''
-      animateType = animateType || _opt.animate?.type
+      animateType = animateType || (not fromHistory or not _opt.animate?.skipFromHistory) && _opt.animate?.type || ''
       ttf = _opt.animate?.timingFunction || 'linear'
       duration = _opt.animate?.duration || 300
       callback = ->
@@ -301,7 +301,13 @@ core = $.extend $({}),
               top: '0'
             , duration, ttf, callback
       else
-        contentDom.show()
+        if _cssProps
+          cssObj = {'opacity': '1'}
+          cssObj[_cssProps[1]] = 'none'
+          cssObj[_cssProps[2]] = 'none'
+        else
+          cssObj = {'opacity': '1', 'top': '0', 'left': '0'}
+        contentDom.css(cssObj).show()
         callback()
       res
 
@@ -312,7 +318,7 @@ core = $.extend $({}),
       _opt.fadeOut modInst, contentDom, relation, from, animateType, cb
     else
       res = ''
-      animateType = animateType || _opt.animate?.type
+      animateType = animateType || (not fromHistory or not _opt.animate?.skipFromHistory) && _opt.animate?.type || ''
       ttf = _opt.animate?.timingFunction || 'linear'
       duration = _opt.animate?.duration || 300
       callback = ->
