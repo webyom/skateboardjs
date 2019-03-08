@@ -429,6 +429,7 @@ core = $.extend($({}), {
         }
         return typeof cb === "function" ? cb() : void 0;
       };
+      contentDom.removeClass('sb-mod--preload');
       if (_cssProps && (animateType === 'fade' || animateType === 'fadeIn')) {
         cssObj = {
           opacity: '0'
@@ -774,6 +775,7 @@ core = $.extend($({}), {
         });
       };
       contentDom = _constructContentDom(modName, params, opt.modOpt);
+      contentDom.addClass('sb-mod--preload');
       return loadMod(modName, contentDom, params);
     }
   },

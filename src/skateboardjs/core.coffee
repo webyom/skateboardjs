@@ -241,6 +241,7 @@ core = $.extend $({}),
           contentDom.css
             zIndex: '3'
         cb?()
+      contentDom.removeClass 'sb-mod--preload'
       if _cssProps and animateType in ['fade', 'fadeIn']
         cssObj =
           opacity: '0'
@@ -500,6 +501,7 @@ core = $.extend $({}),
             else
               alert 'Failed to load module "' + (opt.modOpt?.relModName || '') + '"'
       contentDom = _constructContentDom(modName, params, opt.modOpt)
+      contentDom.addClass 'sb-mod--preload'
       loadMod modName, contentDom, params
 
   back: (mark) ->
