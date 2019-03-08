@@ -449,7 +449,7 @@ core = $.extend($({}), {
         });
       } else if (_cssProps && animateType === 'slide' && relation !== 'tab') {
         sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
-        percentage = Math.min(Math.max(0, ((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0) || 25), 100);
+        percentage = Math.min(Math.max(0, ((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0) || 30), 100);
         cssObj = {};
         cssObj[_cssProps[1]] = 'none';
         if (sd === 'vu' || sd === 'vd') {
@@ -521,7 +521,7 @@ core = $.extend($({}), {
       } else if (_cssProps && animateType === 'slide' && relation !== 'tab') {
         sd = $('[data-slide-direction]', contentDom).attr('data-slide-direction');
         zIndex = '2';
-        percentage = Math.min(Math.max(0, ((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0) || 25), 100);
+        percentage = Math.min(Math.max(0, ((ref4 = _opt.animate) != null ? ref4.slideOutPercent : void 0) || 30), 100);
         if (sd === 'vu' || sd === 'vd') {
           res = 'fade';
           zIndex = '4';

@@ -258,7 +258,7 @@ core = $.extend $({}),
           contentDom.css cssObj
       else if _cssProps and animateType is 'slide' and relation isnt 'tab'
         sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
-        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent || 25), 100
+        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent || 30), 100
         cssObj = {}
         cssObj[_cssProps[1]] = 'none'
         if sd in ['vu', 'vd']
@@ -313,7 +313,7 @@ core = $.extend $({}),
       else if _cssProps and animateType is 'slide' and relation isnt 'tab'
         sd = $('[data-slide-direction]', contentDom).attr 'data-slide-direction'
         zIndex = '2'
-        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent || 25), 100
+        percentage = Math.min Math.max(0, _opt.animate?.slideOutPercent || 30), 100
         if sd in ['vu', 'vd']
           res = 'fade'
           zIndex = '4'
