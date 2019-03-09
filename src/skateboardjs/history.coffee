@@ -58,7 +58,7 @@ setMark = (mark, opt) ->
       location.hash = _exclamationMark + '/' + mark
 
 getMark = (mark) ->
-  if mark
+  if typeof mark is 'string'
     mark.replace /^\/+/, ''
   else if _isSupportHistoryState
     location.pathname.replace /^\/+/, ''

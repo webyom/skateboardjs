@@ -518,9 +518,14 @@ core = $.extend $({}),
       if modInst
         if params
           if mark is modInst.getMark()
-            core.view mark, from: 'history'
+            if @getPreviousModName() is modName and _viewChangeInfo.from isnt 'history'
+              history.back()
+            else
+              core.view mark, from: 'history'
           else
             core.view mark, from: 'link'
+        else if @getPreviousModName() is modName and _viewChangeInfo.from isnt 'history'
+          history.back()
         else
           core.view modInst.getMark(), from: 'history'
       else

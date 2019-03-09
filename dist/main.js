@@ -795,14 +795,20 @@ core = $.extend($({}), {
       if (modInst) {
         if (params) {
           if (mark === modInst.getMark()) {
-            return core.view(mark, {
-              from: 'history'
-            });
+            if (this.getPreviousModName() === modName && _viewChangeInfo.from !== 'history') {
+              return history.back();
+            } else {
+              return core.view(mark, {
+                from: 'history'
+              });
+            }
           } else {
             return core.view(mark, {
               from: 'link'
             });
           }
+        } else if (this.getPreviousModName() === modName && _viewChangeInfo.from !== 'history') {
+          return history.back();
         } else {
           return core.view(modInst.getMark(), {
             from: 'history'
@@ -959,7 +965,7 @@ setMark = function(mark, opt) {
 };
 
 getMark = function(mark) {
-  if (mark) {
+  if (typeof mark === 'string') {
     return mark.replace(/^\/+/, '');
   } else if (_isSupportHistoryState) {
     return location.pathname.replace(/^\/+/, '');
