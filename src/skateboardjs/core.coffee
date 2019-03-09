@@ -231,11 +231,12 @@ core = $.extend $({}),
       _opt.fadeIn modInst, contentDom, relation, from, animateType, cb
     else
       res = ''
+      realAnimateType = animateType || _opt.animate?.type || ''
       animateType = animateType || (not fromHistory or not _opt.animate?.skipFromHistory) && _opt.animate?.type || ''
       ttf = _opt.animate?.timingFunction || 'ease-out'
       duration = _opt.animate?.duration || 300
       callback = ->
-        if animateType is 'slide'
+        if realAnimateType is 'slide'
           $('.sb-mod').css
             zIndex: '0'
           contentDom.css
@@ -295,7 +296,7 @@ core = $.extend $({}),
       _opt.fadeOut modInst, contentDom, relation, from, animateType, cb
     else
       res = ''
-      animateType = animateType || (not fromHistory or not _opt.animate?.skipFromHistory) && _opt.animate?.type || ''
+      animateType = animateType || _opt.animate?.type || ''
       ttf = _opt.animate?.timingFunction || 'ease-out'
       duration = _opt.animate?.duration || 300
       callback = ->
