@@ -271,17 +271,19 @@ _isSameOrigin = function(link) {
 };
 
 _init = function() {
-  var t;
+  var firstView, t;
   if (!/\bbody-sb-mod--\S+/.test(document.body.className)) {
     $(document.body).addClass('body-sb-mod--init-mod');
   }
   if (_opt.container) {
     _container = $(_opt.container);
   }
+  firstView = true;
   ajaxHistory.setListener(function(mark) {
-    return core.view(mark, {
-      from: 'history'
+    core.view(mark, {
+      from: firstView ? 'init' : 'history'
     });
+    return firstView = false;
   });
   ajaxHistory.init({
     exclamationMark: _opt.exclamationMark,
@@ -416,7 +418,7 @@ core = $.extend($({}), {
     } else {
       res = '';
       realAnimateType = animateType || ((ref = _opt.animate) != null ? ref.type : void 0) || '';
-      animateType = animateType || (!fromHistory || !((ref1 = _opt.animate) != null ? ref1.skipFromHistory : void 0)) && ((ref2 = _opt.animate) != null ? ref2.type : void 0) || '';
+      animateType = animateType || from !== 'init' && (!fromHistory || !((ref1 = _opt.animate) != null ? ref1.skipFromHistory : void 0)) && ((ref2 = _opt.animate) != null ? ref2.type : void 0) || '';
       ttf = ((ref3 = _opt.animate) != null ? ref3.timingFunction : void 0) || 'ease-out';
       duration = ((ref4 = _opt.animate) != null ? ref4.duration : void 0) || 300;
       callback = function() {

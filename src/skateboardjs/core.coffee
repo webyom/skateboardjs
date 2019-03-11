@@ -131,8 +131,10 @@ _isSameOrigin = (link) ->
 _init = ->
   $(document.body).addClass 'body-sb-mod--init-mod' unless (/\bbody-sb-mod--\S+/).test document.body.className
   _container = $(_opt.container) if _opt.container
+  firstView = true
   ajaxHistory.setListener (mark) ->
-    core.view mark, from: 'history'
+    core.view mark, from: if firstView then 'init' else 'history'
+    firstView = false
   ajaxHistory.init
     exclamationMark: _opt.exclamationMark
     isSupportHistoryState: _opt.isSupportHistoryState
@@ -232,7 +234,7 @@ core = $.extend $({}),
     else
       res = ''
       realAnimateType = animateType || _opt.animate?.type || ''
-      animateType = animateType || (not fromHistory or not _opt.animate?.skipFromHistory) && _opt.animate?.type || ''
+      animateType = animateType || from isnt 'init' && (not fromHistory or not _opt.animate?.skipFromHistory) && _opt.animate?.type || ''
       ttf = _opt.animate?.timingFunction || 'ease-out'
       duration = _opt.animate?.duration || 300
       callback = ->
