@@ -49,11 +49,13 @@ class BaseMod
     else
       callback?()
 
-  _afterFadeIn: (relModInst) ->
+  _beforeFadeIn: ->
+    @_reactComInst.onSbBeforeFadeIn? core.getViewChangeInfo()
+
+  _afterFadeIn: ->
     @viewed = true
     $(window).scrollTop @_windowScrollTop
-    if @_reactComInst?.onSbFadeIn
-      @_reactComInst.onSbFadeIn relModInst
+    @_reactComInst.onSbFadeIn? core.getViewChangeInfo()
 
   _afterFadeOut: (relModName) ->
     @_ifNotCachable relModName, =>
@@ -156,6 +158,9 @@ class BaseMod
   getParams: ->
     @_params
 
+  getDom: ->
+    @_contentDom
+
   update: (mark, params, opt) ->
     @_mark = mark
     @_params = params || @_params
@@ -167,11 +172,15 @@ class BaseMod
     core.scroll 0
     @render()
 
-  scrollToTop: ->
-    $(window).scrollTop 0
+  scrollToTop: (delay) ->
     dom = @$('.sb-mod__body')
     dom = @_contentDom if not dom.length
-    dom.scrollTop 0
+    if delay > 0
+      $('html').animate scrollTop: 0, delay
+      dom.animate scrollTop: 0, delay
+    else
+      $(window).scrollTop 0
+      dom.scrollTop 0
 
   isRenderred: ->
     $('[data-sb-mod-not-renderred]', @_contentDom).length is 0
@@ -196,8 +205,9 @@ class BaseMod
     relation
 
   fadeIn: (relModInst, from, animateType, cb) ->
+    @_beforeFadeIn()
     core.fadeIn @, @_contentDom, relModInst?.getRelation(@_modName), from, animateType, =>
-      @_afterFadeIn relModInst
+      @_afterFadeIn()
       cb?()
 
   fadeOut: (relModName, from, animateType, cb) ->

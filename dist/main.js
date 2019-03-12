@@ -1095,13 +1095,16 @@ BaseMod = (function() {
     }
   };
 
-  BaseMod.prototype._afterFadeIn = function(relModInst) {
-    var ref;
+  BaseMod.prototype._beforeFadeIn = function() {
+    var base;
+    return typeof (base = this._reactComInst).onSbBeforeFadeIn === "function" ? base.onSbBeforeFadeIn(core.getViewChangeInfo()) : void 0;
+  };
+
+  BaseMod.prototype._afterFadeIn = function() {
+    var base;
     this.viewed = true;
     $(window).scrollTop(this._windowScrollTop);
-    if ((ref = this._reactComInst) != null ? ref.onSbFadeIn : void 0) {
-      return this._reactComInst.onSbFadeIn(relModInst);
-    }
+    return typeof (base = this._reactComInst).onSbFadeIn === "function" ? base.onSbFadeIn(core.getViewChangeInfo()) : void 0;
   };
 
   BaseMod.prototype._afterFadeOut = function(relModName) {
@@ -1241,6 +1244,10 @@ BaseMod = (function() {
     return this._params;
   };
 
+  BaseMod.prototype.getDom = function() {
+    return this._contentDom;
+  };
+
   BaseMod.prototype.update = function(mark, params, opt) {
     this._mark = mark;
     this._params = params || this._params;
@@ -1254,14 +1261,23 @@ BaseMod = (function() {
     return this.render();
   };
 
-  BaseMod.prototype.scrollToTop = function() {
+  BaseMod.prototype.scrollToTop = function(delay) {
     var dom;
-    $(window).scrollTop(0);
     dom = this.$('.sb-mod__body');
     if (!dom.length) {
       dom = this._contentDom;
     }
-    return dom.scrollTop(0);
+    if (delay > 0) {
+      $('html').animate({
+        scrollTop: 0
+      }, delay);
+      return dom.animate({
+        scrollTop: 0
+      }, delay);
+    } else {
+      $(window).scrollTop(0);
+      return dom.scrollTop(0);
+    }
   };
 
   BaseMod.prototype.isRenderred = function() {
@@ -1301,9 +1317,10 @@ BaseMod = (function() {
   };
 
   BaseMod.prototype.fadeIn = function(relModInst, from, animateType, cb) {
+    this._beforeFadeIn();
     return core.fadeIn(this, this._contentDom, relModInst != null ? relModInst.getRelation(this._modName) : void 0, from, animateType, (function(_this) {
       return function() {
-        _this._afterFadeIn(relModInst);
+        _this._afterFadeIn();
         return typeof cb === "function" ? cb() : void 0;
       };
     })(this));
