@@ -1096,23 +1096,30 @@ BaseMod = (function() {
   };
 
   BaseMod.prototype._beforeFadeIn = function() {
-    var base;
-    return typeof (base = this._reactComInst).onSbBeforeFadeIn === "function" ? base.onSbBeforeFadeIn(core.getViewChangeInfo()) : void 0;
+    var ref;
+    return (ref = this._reactComInst) != null ? typeof ref.onSbBeforeFadeIn === "function" ? ref.onSbBeforeFadeIn(core.getViewChangeInfo()) : void 0 : void 0;
   };
 
   BaseMod.prototype._afterFadeIn = function() {
-    var base;
+    var ref;
     this.viewed = true;
     $(window).scrollTop(this._windowScrollTop);
-    return typeof (base = this._reactComInst).onSbFadeIn === "function" ? base.onSbFadeIn(core.getViewChangeInfo()) : void 0;
+    return (ref = this._reactComInst) != null ? typeof ref.onSbFadeIn === "function" ? ref.onSbFadeIn(core.getViewChangeInfo()) : void 0 : void 0;
+  };
+
+  BaseMod.prototype._beforeFadeOut = function() {
+    var ref;
+    return (ref = this._reactComInst) != null ? typeof ref.onSbBeforeFadeOut === "function" ? ref.onSbBeforeFadeOut(core.getViewChangeInfo()) : void 0 : void 0;
   };
 
   BaseMod.prototype._afterFadeOut = function(relModName) {
-    return this._ifNotCachable(relModName, (function(_this) {
+    var ref;
+    this._ifNotCachable(relModName, (function(_this) {
       return function() {
         return _this.destroy();
       };
     })(this));
+    return (ref = this._reactComInst) != null ? typeof ref.onSbFadeOut === "function" ? ref.onSbFadeOut(core.getViewChangeInfo()) : void 0 : void 0;
   };
 
   BaseMod.prototype._renderHeader = function(data) {
@@ -1327,6 +1334,7 @@ BaseMod = (function() {
   };
 
   BaseMod.prototype.fadeOut = function(relModName, from, animateType, cb) {
+    this._beforeFadeOut();
     if (this._mark === history.getMark()) {
       this._windowScrollTop = $(window).scrollTop();
     } else {

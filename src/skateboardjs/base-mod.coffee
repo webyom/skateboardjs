@@ -50,16 +50,20 @@ class BaseMod
       callback?()
 
   _beforeFadeIn: ->
-    @_reactComInst.onSbBeforeFadeIn? core.getViewChangeInfo()
+    @_reactComInst?.onSbBeforeFadeIn? core.getViewChangeInfo()
 
   _afterFadeIn: ->
     @viewed = true
     $(window).scrollTop @_windowScrollTop
-    @_reactComInst.onSbFadeIn? core.getViewChangeInfo()
+    @_reactComInst?.onSbFadeIn? core.getViewChangeInfo()
+
+  _beforeFadeOut: ->
+    @_reactComInst?.onSbBeforeFadeOut? core.getViewChangeInfo()
 
   _afterFadeOut: (relModName) ->
     @_ifNotCachable relModName, =>
       @destroy()
+    @_reactComInst?.onSbFadeOut? core.getViewChangeInfo()
 
   _renderHeader: (data) ->
     if @_contentDom
@@ -211,6 +215,7 @@ class BaseMod
       cb?()
 
   fadeOut: (relModName, from, animateType, cb) ->
+    @_beforeFadeOut()
     if @_mark is history.getMark()
       @_windowScrollTop = $(window).scrollTop()
     else
